@@ -1,20 +1,17 @@
 #include "value.h"
+#include "dtype.h"
 #include <cstdlib>
 #include <cmath>
 #include <cstring>
 #include <iostream>
+#include <stdexcept>
 #include <vector>
 
-Value* initialize_value(double* data) {
+Value* initialize_value(double* data, DType dtype) {
   Value* v = (Value*)malloc(sizeof(Value));
-  v->data = (double*)malloc(sizeof(double));
-  if (data) {
-    memcpy(v->data, data, sizeof(double));
-  } else {
-    *(v->data) = 0.0;
-  }
-  v->grad = (double*)malloc(sizeof(double));
-  *(v->grad) = 0.0;
+  v->data = initialize_data(data ? *data : 0.0, dtype);
+  v->grad = initialize_data(0.0, dtype);
+  v->dtype = dtype;
   v->exp = (double*)malloc(sizeof(double));
   *(v->exp) = 0.0;
   v->_prev = NULL;
@@ -29,18 +26,28 @@ void noop_backward(Value* v) { }
 void add_backward(Value* v) {
   Value* a = v->_prev[0];
   Value* b = v->_prev[1];
-
-  *(a->grad) += *(v->grad);
-  *(b->grad) += *(v->grad);
+  if (a->dtype != b->dtype || a->dtype != v->dtype) {
+    throw std::invalid_argument("Data types do not match in add_backward");
+  }
+  double grad_val = get_data_as_double(v->grad, v->dtype);
+  double a_grad = get_data_as_double(a->grad, a->dtype);
+  double b_grad = get_data_as_double(b->grad, b->dtype);
+  set_data_from_double(a->grad, a->dtype, a_grad + grad_val);
+  set_data_from_double(b->grad, b->dtype, b_grad + grad_val);
 }
 
 Value* add_val(Value* a, Value* b) {
+  if (a->dtype != b->dtype) {
+    throw std::invalid_argument("Data types do not match in add_val");
+  }
   Value **children = (Value**)malloc(2 * sizeof(Value*));
   children[0] = a;
   children[1] = b;
 
-  Value* out = initialize_value(NULL);
-  *(out->data) = *(a->data) + *(b->data);
+  Value* out = initialize_value(NULL, a->dtype);
+  double a_data = get_data_as_double(a->data, a->dtype);
+  double b_data = get_data_as_double(b->data, b->dtype);
+  set_data_from_double(out->data, out->dtype, a_data + b_data);
   out->_prev = children;
   *(out->_prev_size) = 2;
   out->_backward = add_backward;
@@ -50,18 +57,30 @@ Value* add_val(Value* a, Value* b) {
 void mul_backward(Value* v) {
   Value* a = v->_prev[0];
   Value* b = v->_prev[1];
-
-  *(a->grad) += *(b->data) * *(v->grad);
-  *(b->grad) += *(a->data) * *(v->grad);
+  if (a->dtype != b->dtype || a->dtype != v->dtype) {
+    throw std::invalid_argument("Data types do not match in mul_backward");
+  }
+  double grad_val = get_data_as_double(v->grad, v->dtype);
+  double a_data = get_data_as_double(a->data, a->dtype);
+  double b_data = get_data_as_double(b->data, b->dtype);
+  double a_grad = get_data_as_double(a->grad, a->dtype);
+  double b_grad = get_data_as_double(b->grad, b->dtype);
+  set_data_from_double(a->grad, a->dtype, a_grad + b_data * grad_val);
+  set_data_from_double(b->grad, b->dtype, b_grad + a_data * grad_val);
 }
 
 Value* mul_val(Value* a, Value* b) {
+  if (a->dtype != b->dtype) {
+    throw std::invalid_argument("Data types do not match in mul_val");
+  }
   Value **children = (Value**)malloc(2 * sizeof(Value*));
   children[0] = a;
   children[1] = b;
 
-  Value* out = initialize_value(NULL);
-  *(out->data) = *(a->data) * *(b->data);
+  Value* out = initialize_value(NULL, a->dtype);
+  double a_data = get_data_as_double(a->data, a->dtype);
+  double b_data = get_data_as_double(b->data, b->dtype);
+  set_data_from_double(out->data, out->dtype, a_data * b_data);
   out->_prev = children;
   *(out->_prev_size) = 2;
   out->_backward = mul_backward;
@@ -70,15 +89,23 @@ Value* mul_val(Value* a, Value* b) {
 
 void pow_backward(Value* v) {
   Value* a = v->_prev[0];
-  *(a->grad) += *(v->exp) * std::pow(*(a->data), *(v->exp) - 1) * *(v->grad);
+  if (a->dtype != v->dtype) {
+    throw std::invalid_argument("Data types do not match in pow_backward");
+  }
+  double exp_val = *(v->exp);
+  double a_data = get_data_as_double(a->data, a->dtype);
+  double grad_val = get_data_as_double(v->grad, v->dtype);
+  double a_grad = get_data_as_double(a->grad, a->dtype);
+  set_data_from_double(a->grad, a->dtype, a_grad + exp_val * std::pow(a_data, exp_val - 1) * grad_val);
 }
 
 Value* pow_val(Value* a, double* exp) {
   Value **children = (Value**)malloc(1 * sizeof(Value*));
   children[0] = a;
 
-  Value* out = initialize_value(NULL);
-  *(out->data) = std::pow(*(a->data), *exp);
+  Value* out = initialize_value(NULL, a->dtype);
+  double a_data = get_data_as_double(a->data, a->dtype);
+  set_data_from_double(out->data, out->dtype, std::pow(a_data, *exp));
   out->_prev = children;
   *(out->_prev_size) = 1;
   out->_backward = pow_backward;
@@ -88,7 +115,7 @@ Value* pow_val(Value* a, double* exp) {
 
 Value* negate(Value* a) {
   double neg_one = -1.0;
-  Value* neg_one_val = initialize_value(&neg_one);
+  Value* neg_one_val = initialize_value(&neg_one, a->dtype);
   return mul_val(a, neg_one_val);
 }
 
@@ -98,15 +125,22 @@ Value* sub_val(Value* a, Value* b) {
 
 void relu_backward(Value* v) {
   Value* a = v->_prev[0];
-  *(a->grad) += (*(v->data) > 0) * *(v->grad);
+  if (a->dtype != v->dtype) {
+    throw std::invalid_argument("Data types do not match in relu_backward");
+  }
+  double grad_val = get_data_as_double(v->grad, v->dtype);
+  double a_data = get_data_as_double(a->data, a->dtype);
+  double a_grad = get_data_as_double(a->grad, a->dtype);
+  set_data_from_double(a->grad, a->dtype, a_grad + (a_data > 0 ? grad_val : 0));
 }
 
 Value* relu(Value* a) {
   Value **children = (Value**)malloc(1 * sizeof(Value*));
   children[0] = a;
 
-  Value* out = initialize_value(NULL);
-  *(out->data) = *(a->data) > 0 ? *(a->data) : 0;
+  Value* out = initialize_value(NULL, a->dtype);
+  double a_data = get_data_as_double(a->data, a->dtype);
+  set_data_from_double(out->data, out->dtype, a_data > 0 ? a_data : 0);
   out->_prev = children;
   *(out->_prev_size) = 1;
   out->_backward = relu_backward;
@@ -115,16 +149,23 @@ Value* relu(Value* a) {
 
 void sigmoid_backward(Value* v) {
   Value* a = v->_prev[0];
-  double sig = 1 / (1 + std::exp(-(*(v->data))));
-  *(a->grad) += sig * (1 - sig) * *(v->grad);
+  if (a->dtype != v->dtype) {
+    throw std::invalid_argument("Data types do not match in sigmoid_backward");
+  }
+  double grad_val = get_data_as_double(v->grad, v->dtype);
+  double a_data = get_data_as_double(a->data, a->dtype);
+  double sig = 1 / (1 + std::exp(-a_data));
+  double a_grad = get_data_as_double(a->grad, a->dtype);
+  set_data_from_double(a->grad, a->dtype, a_grad + sig * (1 - sig) * grad_val);
 }
 
 Value* sigmoid(Value* a) {
   Value **children = (Value**)malloc(1 * sizeof(Value*));
   children[0] = a;
 
-  Value* out = initialize_value(NULL);
-  *(out->data) = 1 / (1 + std::exp(-(*(a->data))));
+  Value* out = initialize_value(NULL, a->dtype);
+  double a_data = get_data_as_double(a->data, a->dtype);
+  set_data_from_double(out->data, out->dtype, 1 / (1 + std::exp(-a_data)));
   out->_prev = children;
   *(out->_prev_size) = 1;
   out->_backward = sigmoid_backward;
@@ -133,15 +174,22 @@ Value* sigmoid(Value* a) {
 
 void tanh_backward(Value* v) {
   Value* a = v->_prev[0];
-  *(a->grad) += (1 - std::pow(*(v->data), 2)) * *(v->grad);
+  if (a->dtype != v->dtype) {
+    throw std::invalid_argument("Data types do not match in tanh_backward");
+  }
+  double grad_val = get_data_as_double(v->grad, v->dtype);
+  double a_data = get_data_as_double(a->data, a->dtype);
+  double a_grad = get_data_as_double(a->grad, a->dtype);
+  set_data_from_double(a->grad, a->dtype, a_grad + (1 - std::pow(a_data, 2)) * grad_val);
 }
 
 Value* tan_h(Value* a) {
   Value **children = (Value**)malloc(1 * sizeof(Value*));
   children[0] = a;
 
-  Value* out = initialize_value(NULL);
-  *(out->data) = std::tanh(*(a->data));
+  Value* out = initialize_value(NULL, a->dtype);
+  double a_data = get_data_as_double(a->data, a->dtype);
+  set_data_from_double(out->data, out->dtype, std::tanh(a_data));
   out->_prev = children;
   *(out->_prev_size) = 1;
   out->_backward = tanh_backward;
@@ -150,16 +198,23 @@ Value* tan_h(Value* a) {
 
 void silu_backward(Value* v) {
   Value* a = v->_prev[0];
-  double sig = 1 / (1 + std::exp(-(*(a->data))));
-  *(a->grad) += (*(v->grad)) * (sig + (*(v->data)) * (1 - sig));
+  if (a->dtype != v->dtype) {
+    throw std::invalid_argument("Data types do not match in silu_backward");
+  }
+  double grad_val = get_data_as_double(v->grad, v->dtype);
+  double a_data = get_data_as_double(a->data, a->dtype);
+  double sig = 1 / (1 + std::exp(-a_data));
+  double a_grad = get_data_as_double(a->grad, a->dtype);
+  set_data_from_double(a->grad, a->dtype, a_grad + grad_val * (sig + a_data * (1 - sig)));
 }
 
 Value* silu(Value* a) {
   Value **children = (Value**)malloc(1 * sizeof(Value*));
   children[0] = a;
 
-  Value* out = initialize_value(NULL);
-  *(out->data) = *(a->data) / (1 + std::exp(-(*(a->data))));
+  Value* out = initialize_value(NULL, a->dtype);
+  double a_data = get_data_as_double(a->data, a->dtype);
+  set_data_from_double(out->data, out->dtype, a_data / (1 + std::exp(-a_data)));
   out->_prev = children;
   *(out->_prev_size) = 1;
   out->_backward = silu_backward;
@@ -181,16 +236,24 @@ void backward(Value* v) {
   std::vector<Value*> topo;
   std::vector<Value*> visited;
   build_topo(v, topo, visited);
-  *(v->grad) = 1.0;
+  set_data_from_double(v->grad, v->dtype, 1.0);
   for (auto it = topo.rbegin(); it != topo.rend(); ++it) {
     (*it)->_backward(*it);
   }
 }
 
-double get_data(const Value* v) {
-  return *(v->data);
+double get_data_as_double(const Value* v) {
+  return get_data_as_double(v->data, v->dtype);
 }
 
-double get_grad(const Value* v) {
-  return *(v->grad);
+double get_grad_as_double(const Value* v) {
+  return get_data_as_double(v->grad, v->dtype);
+}
+
+void set_data_from_double(Value* v, double value) {
+  set_data_from_double(v->data, v->dtype, value);
+}
+
+void set_grad_from_double(Value* v, double value) {
+  set_data_from_double(v->grad, v->dtype, value);
 }
