@@ -26,7 +26,7 @@ Value._fields_ = [
   ("dtype", ctypes.c_int),
 ]
 
-lib.initialize_value.argtypes = [ctypes.c_void_p, ctypes.c_int]
+lib.initialize_value.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.c_int]
 lib.initialize_value.restype = ctypes.POINTER(Value)
 
 lib.get_data_as_double.argtypes = [ctypes.POINTER(Value)]
@@ -54,18 +54,27 @@ class ValueWrapper:
   def __init__(self, data, dtype):
     self.dtype = dtype
     if dtype == DType.FLOAT64:
-      data = ctypes.c_double(data)
+      c_data = ctypes.c_double(data)
     elif dtype == DType.FLOAT32:
-      data = ctypes.c_float(data)
+      c_data = ctypes.c_float(data)
     elif dtype == DType.INT64:
-      data = ctypes.c_int64(data)
+      c_data = ctypes.c_int64(data)
     elif dtype == DType.INT32:
-      data = ctypes.c_int32(data)
+      c_data = ctypes.c_int32(data)
     elif dtype == DType.INT16:
-      data = ctypes.c_int16(data)
+      c_data = ctypes.c_int16(data)
     elif dtype == DType.INT8:
-      data = ctypes.c_int8(data)
-    self.value = lib.initialize_value(ctypes.byref(data), dtype)
+      c_data = ctypes.c_int8(data)
+    else:
+      raise ValueError(f"Unsupported dtype: {dtype}")
+      
+    # Debug: Print the data being passed
+    print(f"Data: {c_data.value}, DType: {self.dtype}")
+    
+    self.value = lib.initialize_value(ctypes.byref(c_data), dtype)
+    
+    # Debug: Print the result from the library call
+    print(f"Library call result: {self.value}")
 
   def data(self):
     return lib.get_data_as_double(self.value)

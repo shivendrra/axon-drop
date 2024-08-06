@@ -221,6 +221,28 @@ Value* silu(Value* a) {
   return out;
 }
 
+void gelu_backward(Value* v) {
+  Value* a = v->_prev[0];
+  if (a->dtype != v->dtype) {
+    throw std::invalid_argument("Data types do not match in gelu_backward");
+  }
+
+}
+
+Value* gelu(Value* a) {
+  Value **children = (Value**)malloc(1 * sizeof(Value*));
+  children[0] = a;
+
+  Value* out = initialize_value(NULL, a->dtype);
+  double a_data = get_data_as_double(a->data, a->dtype);
+  double gelu_out = 0.5 * a_data * (1 + std::tanh(std::sqrt(M_2_PI) * (a_data + 0.044715 * std::pow(a_data, 3))));
+  set_data_from_double(out->data, out->data, gelu_out);
+  out->_prev = children;
+  *(out->_prev_size) = 1;
+  out->_backward = gelu_backward;
+  return out;
+}
+
 void build_topo(Value* v, std::vector<Value*>& topo, std::vector<Value*>& visited) {
   for (auto vi : visited) {
     if (vi == v) return;
