@@ -43,6 +43,7 @@ extern "C" {
   void build_topo(Scalar* v, DynamicArray* topo, DynamicArray* visited);
   void backward(Scalar* v);
   void print(Scalar* v);
+  void cleanup(Scalar* v);
   double get_scalar_data(Scalar* v);
   double get_scalar_grad(Scalar* v);
 }

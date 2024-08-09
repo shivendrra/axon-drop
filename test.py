@@ -19,29 +19,29 @@
 
 from drop import Scalar
 
-a = Scalar(2.0)
-b = Scalar(3.0)
+x1, x2 = Scalar(2), Scalar(3)
+x3, x4 = Scalar(5), Scalar(10)
+x5, x6 = Scalar(1), Scalar(4)
+x7 = Scalar(-2)
 
-c = a + b
-d = a * b
-# e = d.relu()
-# f = d.tanh()
-# h = d.sigmoid()
+a1 = x1 + x2
+a2 = x3 - x4
+a3 = a1 * a2
+a4 = a3 ** 2
+a5 = x5 * x6
+a6 = a5.sigmoid()
+a7 = x7.tanh()
+a8 = a4 + a6
+a9 = a8 + a7
+y = a9.relu()
 
-print(a)
-print(b)
-print(c)
-print(d)
-# print(e)
-# print(f)
-# print(h)
+y.backward()
 
-d.backward()
-
-print(a.grad)
-print(b.grad)
-print(c.grad)
-print(d.grad)
-# print(e.value.contents._prev_size)
-# print(f.value.contents._prev_size)
-# print(h.value.contents._prev_size)
+print(x1)
+print(x2)
+print(x3)
+print(x4)
+print(x5)
+print(x6)
+print(x7)
+print(y)
