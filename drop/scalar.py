@@ -10,19 +10,31 @@ class Scalar:
 
   @property
   def data(self):
-    return self.value.contents.data
+    if isinstance(self.value, CScalar):
+      return self.value.data
+    else:
+      return self.value.contents.data
 
   @data.setter
   def data(self, new_data):
-    self.value.contents.data = new_data
+    if isinstance(self.value, CScalar):
+      self.value.data = float(new_data)
+    else:
+      self.value.contents.data = float(new_data)
 
   @property
   def grad(self):
-    return self.value.contents.grad
+    if isinstance(self.value, CScalar):
+      return self.value.grad
+    else:
+      return self.value.contents.grad
   
   @grad.setter
   def grad(self, new_grad):
-    self.value.contents.grad = new_grad
+    if isinstance(self.value, CScalar):
+      self.value.grad = float(new_grad)
+    else:
+      self.value.contents.grad = float(new_grad)
 
   def __repr__(self):
     return f"Scalar(data={self.data:.4f}, grad={self.grad:.4f})"
@@ -34,7 +46,7 @@ class Scalar:
     if isinstance(other, Scalar):
       other = other
     else:
-      other = lib.initialize_scalars(float(other), None, 0)
+      other = Scalar(other)
     out = lib.add_val(self.value, other.value)
     return Scalar(out.contents)
     
@@ -45,7 +57,7 @@ class Scalar:
     if isinstance(other, Scalar):
       other = other
     else:
-      other = lib.initialize_scalars(float(other), None, 0)
+      other = Scalar(other)
     out = lib.mul_val(self.value, other.value)
     return Scalar(out.contents)
     
@@ -64,18 +76,18 @@ class Scalar:
     if isinstance(other, Scalar):
       other = other
     else:
-      other = lib.initialize_scalars(float(other), None, 0)
+      other = Scalar(other)
     out = lib.sub_val(self.value, other.value)
     return Scalar(out.contents)
     
   def __rsub__(self, other):
-    return other - self
+    return - (self - other)
 
   def __truediv__(self, other):
     if isinstance(other, Scalar):
       other = other
     else:
-      other = lib.initialize_scalars(float(other), None, 0)
+      other = Scalar(other)
     out = lib.div_val(self.value, other.value)
     return Scalar(out.contents)
 
