@@ -57,3 +57,16 @@ lib.get_scalar_data.restype = ctypes.c_double
 
 lib.get_scalar_grad.argtypes = [ctypes.POINTER(CScalar)]
 lib.get_scalar_grad.restype = ctypes.c_double
+
+lib.add_backward.argtypes = [ctypes.POINTER(CScalar)]
+lib.add_backward.restype = None
+lib.mul_backward.argtypes = [ctypes.POINTER(CScalar)]
+lib.mul_backward.restype = None
+lib.pow_backward.argtypes = [ctypes.POINTER(CScalar)]
+lib.pow_backward.restype = None
+lib.relu_backward.argtypes = [ctypes.POINTER(CScalar)]
+lib.relu_backward.restype = None
+lib.tanh_backward.argtypes = [ctypes.POINTER(CScalar)]
+lib.tanh_backward.restype = None
+lib.sigmoid_backward.argtypes = [ctypes.POINTER(CScalar)]
+lib.sigmoid_backward.restype = None

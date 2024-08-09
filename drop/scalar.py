@@ -1,4 +1,4 @@
-from cbase import CScalar, lib
+from .cbase import CScalar, lib
 import ctypes
 
 class Scalar:
@@ -23,6 +23,12 @@ class Scalar:
   @grad.setter
   def grad(self, new_grad):
     self.value.contents.grad = new_grad
+
+  def __repr__(self):
+    return f"Scalar(data={self.data:.4f}, grad={self.grad:.4f})"
+
+  def __str__(self):
+    return self.__repr__()
 
   def __add__(self, other):
     if isinstance(other, Scalar):
@@ -91,28 +97,3 @@ class Scalar:
   def backward(self):
     lib.backward(self.value)
 
-  def __repr__(self):
-    return f"Scalar(data={self.data:.4f}, grad={self.grad:.4f})"
-
-  def __str__(self):
-    return self.__repr__()
-
-if __name__ == "__main__":
-  val1 = Scalar(2.0)
-  val2 = Scalar(3.0)
-
-  result = val1 + val2
-  print(f"Addition result: {result}")
-
-  result = val1 * val2
-  print(f"Multiplication result: {result}")
-
-  result = val1 ** 3.0
-  print(f"Power result: {result}")
-
-  result = val1.relu()
-  print(f"ReLU result: {result}")
-
-  result.backward()
-  print(f"val1 gradient: {val1.grad}")
-  print(f"val2 gradient: {val2.grad}")

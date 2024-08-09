@@ -16,15 +16,22 @@ Scalar* initialize_scalars(double data, Scalar** child, int child_size) {
   self->data = data;
   self->grad = 0.0;
   self->_prev_size = child_size;
-  self->_prev = child;
+  if (child_size > 0) {
+    self->_prev = (Scalar**)malloc(child_size * sizeof(Scalar*));
+    memcpy(self->_prev, child, child_size * sizeof(Scalar*));
+  } else {
+    self->_prev = NULL;
+  }
   self->_backward = noop_backward;
   self->aux = 1;
   return self;
 }
 
 void add_backward(Scalar* self) {
-  self->_prev[0]->grad += self->grad;
-  self->_prev[1]->grad += self->grad;
+  if (self->_prev_size == 2) {
+    self->_prev[0]->grad += self->grad;
+    self->_prev[1]->grad += self->grad;
+  }
 }
 
 Scalar* add_val(Scalar* a, Scalar* b) {
@@ -38,8 +45,10 @@ Scalar* add_val(Scalar* a, Scalar* b) {
 }
 
 void mul_backward(Scalar* self) {
-  self->_prev[0]->grad += self->grad * self->_prev[1]->data;
-  self->_prev[1]->grad += self->grad * self->_prev[0]->data;
+  if (self->_prev_size == 2) {
+    self->_prev[0]->grad += self->grad * self->_prev[1]->data;
+    self->_prev[1]->grad += self->grad * self->_prev[0]->data;
+  }
 }
 
 Scalar* mul_val(Scalar* a, Scalar* b) {
@@ -53,7 +62,9 @@ Scalar* mul_val(Scalar* a, Scalar* b) {
 }
 
 void pow_backward(Scalar* self) {
-  self->_prev[0]->grad += self->grad * (self->aux * pow(self->_prev[0]->data, self->aux-1));
+  if (self->_prev_size == 1) {
+    self->_prev[0]->grad += self->grad * (self->aux * pow(self->_prev[0]->data, self->aux-1));
+  }
 }
 
 Scalar* pow_val(Scalar* a, float exp) {
@@ -67,7 +78,9 @@ Scalar* pow_val(Scalar* a, float exp) {
 }
 
 void relu_backward(Scalar* self) {
-  self->_prev[0]->grad += self->grad * (self->data > 0);
+  if (self->_prev_size == 1) {
+    self->_prev[0]->grad += self->grad * (self->data > 0);
+  }
 }
 
 Scalar* relu(Scalar* a) {
@@ -80,7 +93,9 @@ Scalar* relu(Scalar* a) {
 }
 
 void tanh_backward(Scalar* self) {
-  self->_prev[0]->grad += self->grad * (1 - pow(self->_prev[0]->data, 2));
+  if (self->_prev_size == 1) {
+    self->_prev[0]->grad += self->grad * (1 - pow(self->_prev[0]->data, 2));
+  }
 }
 
 Scalar* tan_h(Scalar* a) {
@@ -93,7 +108,9 @@ Scalar* tan_h(Scalar* a) {
 }
 
 void sigmoid_backward(Scalar* self) {
-  self->_prev[0]->grad += self->grad * (self->data * (1 - self->data));
+  if (self->_prev_size == 1) {
+    self->_prev[0]->grad += self->grad * (self->data * (1 - self->data));
+  }
 }
 
 Scalar* sigmoid(Scalar* a) {
@@ -158,6 +175,13 @@ void build_topo(Scalar* self, DynamicArray* topo, DynamicArray* visited) {
   }
 }
 
+void cleanup(Scalar* v) {
+  if (v->_prev != NULL) {
+    free(v->_prev);
+  }
+  free(v);
+}
+
 void backward(Scalar* self) {
   DynamicArray visited;
   dynamic_array_init(&visited);
@@ -165,11 +189,17 @@ void backward(Scalar* self) {
   dynamic_array_init(&topo);
   build_topo(self, &topo, &visited);
   dynamic_array_free(&visited);
+
   self->grad = 1.0;
+
   for (int i = topo.size - 1; i >= 0; --i) {
     if (topo.data[i]->_backward != NULL) {
       topo.data[i]->_backward(topo.data[i]);
     }
+  }
+
+  for (int i = 0; i < topo.size; ++i) {
+    cleanup(topo.data[i]);
   }
   dynamic_array_free(&topo);
 }
