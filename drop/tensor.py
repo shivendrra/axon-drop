@@ -1,12 +1,11 @@
 from .helpers.shape import *
-from .base import value
+from .scalar import Scalar
 from .helpers.utils import zeros
 class Tensor:
   def __init__(self, *data) -> None:
     data = data[0] if len(data) == 1 and isinstance(data[0], list) else list(data)
     self.data = self.initialize_data(data)
     self.shape = self.shape()
-    self.actual_value = self._actual_value()
     self.ndim = len(self.shape)
     self._backward = lambda: None
     self.grad = self._show_grad()
@@ -15,7 +14,7 @@ class Tensor:
     def _init(data):
       if isinstance(data, list):
         return [_init(_d) for _d in data]
-      return data if isinstance(data, value) else value(data)
+      return data if isinstance(data, Scalar) else Scalar(data)
     return _init(data)
   
   def __repr__(self) -> str:
@@ -24,19 +23,13 @@ class Tensor:
     data_str = ',\n\t'.join([str(row) for row in self.data])
     return f"Tensor([{data_str}])"
   
-  def _actual_value(self):
-    def _actual(data):
-      if isinstance(data, list):
-        return [_actual(_d) for _d in data]
-      return data.data
-    return _actual(self.data)
-  
   def _show_grad(self):
     def _grad(data):
       if isinstance(data, list):
         return [_grad(_d) for _d in data]
       return data.grad
-    return _grad(self.data)
+    grad = _grad(self.data)
+    return grad
 
   def shape(self):
     return get_shape(self.data)
@@ -99,19 +92,19 @@ class Tensor:
       return data.tanh()
     return Tensor(ops(self.data))
 
-  def gelu(self):
-    def ops(data):
-      if isinstance(data, list):
-        return [ops(_d) for _d in data]
-      return data.gelu()
-    return Tensor(ops(self.data))
+  # def gelu(self):
+  #   def ops(data):
+  #     if isinstance(data, list):
+  #       return [ops(_d) for _d in data]
+  #     return data.gelu()
+  #   return Tensor(ops(self.data))
 
-  def silu(self):
-    def ops(data):
-      if isinstance(data, list):
-        return [ops(_d) for _d in data]
-      return data.silu()
-    return Tensor(ops(self.data))
+  # def silu(self):
+  #   def ops(data):
+  #     if isinstance(data, list):
+  #       return [ops(_d) for _d in data]
+  #     return data.silu()
+  #   return Tensor(ops(self.data))
 
   def sigmoid(self):
     def ops(data):
@@ -120,12 +113,12 @@ class Tensor:
       return data.sigmoid()
     return Tensor(ops(self.data))
 
-  def swiglu(self):
-    def ops(data):
-      if isinstance(data, list):
-        return [ops(_d) for _d in data]
-      return data.swiglu()
-    return Tensor(self.data)
+  # def swiglu(self):
+  #   def ops(data):
+  #     if isinstance(data, list):
+  #       return [ops(_d) for _d in data]
+  #     return data.swiglu()
+  #   return Tensor(self.data)
   
   def backward(self):
     def _back(data):
@@ -133,5 +126,5 @@ class Tensor:
         for _d in data:
           _back(_d)
       else:
-        data.backward() 
+        data.backward()
     _back(self.data)
