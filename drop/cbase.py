@@ -46,6 +46,15 @@ lib.sigmoid.restype = ctypes.POINTER(CScalar)
 lib.tan_h.argtypes = [ctypes.POINTER(CScalar)]
 lib.tan_h.restype = ctypes.POINTER(CScalar)
 
+lib.gelu.argtypes = [ctypes.POINTER(CScalar)]
+lib.gelu.restype = ctypes.POINTER(CScalar)
+
+lib.silu.argtypes = [ctypes.POINTER(CScalar)]
+lib.silu.restype = ctypes.POINTER(CScalar)
+
+lib.swiglu.argtypes = [ctypes.POINTER(CScalar)]
+lib.swiglu.restype = ctypes.POINTER(CScalar)
+
 lib.backward.argtypes = [ctypes.POINTER(CScalar)]
 lib.backward.restype = None
 

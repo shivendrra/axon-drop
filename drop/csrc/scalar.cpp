@@ -126,6 +126,65 @@ Scalar* sigmoid(Scalar* a) {
   return out;
 }
 
+void gelu_backward(Scalar* self) {
+  if (self->_prev_size == 1) {
+    double x = self->_prev[0]->data;
+    double tanh_out = tanh(sqrt(2 / M_PI) * (x + 0.044715 * pow(x, 3)));
+    double gelu_grad = 0.5 * (1 + tanh_out + x * (1 - pow(tanh_out, 2)) * sqrt(2 / M_PI) * (1 + 3 * 0.044715 * pow(x, 2)));
+    self->_prev[0]->grad += self->grad * gelu_grad;
+  }
+}
+
+Scalar* gelu(Scalar* a) {
+  Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
+  child[0] = a;
+
+  double gelu_data = 0.5 * a->data * (1 + tanh(sqrt(2 / M_PI) * (a->data + 0.044715 * pow(a->data, 3))));
+  Scalar* out = initialize_scalars(gelu_data, child, 1);
+  out->_backward = gelu_backward;
+  return out;
+}
+
+void silu_backward(Scalar* self) {
+  if (self->_prev_size == 1) {
+    double x = self->_prev[0]->data;
+    double sigmoid_x = 1 / (1 + exp(-x));
+    double silu_grad = sigmoid_x * (1 + x * (1 - sigmoid_x));
+    self->_prev[0]->grad += self->grad * silu_grad;
+  }
+}
+
+Scalar* silu(Scalar* a) {
+  Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
+  child[0] = a;
+
+  double silu_data = a->data / (1 + exp(-a->data));
+  Scalar* out = initialize_scalars(silu_data, child, 1);
+  out->_backward = silu_backward;
+  return out;
+}
+
+void swiglu_backward(Scalar* self) {
+  if (self->_prev_size == 1) {
+    double x = self->_prev[0]->data;
+    double sigmoid_x = 1 / (1 + exp(-x));
+    double tanh_out = tanh(sqrt(2 / M_PI) * (x + 0.044715 * pow(x, 3)));
+    double gelu_grad = 0.5 * (1 + tanh_out + x * (1 - pow(tanh_out, 2)) * sqrt(2 / M_PI) * (1 + 3 * 0.044715 * pow(x, 2)));
+    double swiglu_grad = sigmoid_x * (gelu_grad + x * (1 - sigmoid_x) * gelu_grad);
+    self->_prev[0]->grad += self->grad * swiglu_grad;
+  }
+}
+
+Scalar* swiglu(Scalar* a) {
+  Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
+  child[0] = a;
+
+  double swiglu_data = a->data * (1 / (1 + exp(-a->data))) * 0.5 * (1 + tanh(sqrt(2 / M_PI) * (a->data + 0.044715 * pow(a->data, 3))));
+  Scalar* out = initialize_scalars(swiglu_data, child, 1);
+  out->_backward = swiglu_backward;
+  return out;
+}
+
 Scalar* negate(Scalar* a) {
   return mul_val(a, initialize_scalars(-1, NULL, 0));
 }

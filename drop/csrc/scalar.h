@@ -39,6 +39,12 @@ extern "C" {
   void sigmoid_backward(Scalar* v);
   Scalar* tan_h(Scalar* a);
   void tanh_backward(Scalar* v);
+  Scalar* silu(Scalar* a);
+  void silu_backward(Scalar* v);
+  Scalar* gelu(Scalar* a);
+  void gelu_backward(Scalar* v);
+  Scalar* swiglu(Scalar* a);
+  void swiglu_backward(Scalar* v);
 
   void build_topo(Scalar* v, DynamicArray* topo, DynamicArray* visited);
   void backward(Scalar* v);

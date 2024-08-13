@@ -106,5 +106,17 @@ class Scalar:
     out = lib.tan_h(self.value)
     return Scalar(out.contents)
   
+  def gelu(self):
+    out = lib.gelu(self.value)
+    return Scalar(out.contents)
+  
+  def silu(self):
+    out = lib.silu(self.value)
+    return Scalar(out.contents)
+
+  def swiglu(self):
+    out = lib.swiglu(self.value)
+    return Scalar(out.contents)
+  
   def backward(self):
     lib.backward(self.value)
