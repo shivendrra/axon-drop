@@ -1,5 +1,4 @@
 from .cbase import CScalar, lib
-import ctypes
 
 class Scalar:
   def __init__(self, data):
@@ -7,6 +6,7 @@ class Scalar:
       self.value = data
     else:
       self.value = lib.initialize_scalars(float(data), None, 0)
+    self.prev = set()
 
   @property
   def data(self):
@@ -47,8 +47,9 @@ class Scalar:
       other = other
     else:
       other = Scalar(other)
-    out = lib.add_val(self.value, other.value)
-    return Scalar(out.contents)
+    out = Scalar(lib.add_val(self.value, other.value).contents)
+    out.prev = (self, other)
+    return out
     
   def __radd__(self, other):
     return self + other
@@ -58,27 +59,31 @@ class Scalar:
       other = other
     else:
       other = Scalar(other)
-    out = lib.mul_val(self.value, other.value)
-    return Scalar(out.contents)
+    out = Scalar(lib.mul_val(self.value, other.value).contents)
+    out.prev = (self, other)
+    return out
     
   def __rmul__(self, other):
     return self * other
 
   def __pow__(self, exp):
-    out = lib.pow_val(self.value, ctypes.c_float(exp))
-    return Scalar(out.contents)
+    out = Scalar(lib.pow_val(self.value, exp).contents)
+    out.prev = (self)
+    return out
 
   def __neg__(self):
-    out = lib.negate(self.value)
-    return Scalar(out.contents)
+    out = Scalar(lib.negate(self.value).contents)
+    out.prev = (self, )
+    return out
 
   def __sub__(self, other):
     if isinstance(other, Scalar):
       other = other
     else:
       other = Scalar(other)
-    out = lib.sub_val(self.value, other.value)
-    return Scalar(out.contents)
+    out = Scalar(lib.sub_val(self.value, other.value).contents)
+    out.prev = (self, other)
+    return out
     
   def __rsub__(self, other):
     return - (self - other)
@@ -88,35 +93,42 @@ class Scalar:
       other = other
     else:
       other = Scalar(other)
-    out = lib.div_val(self.value, other.value)
-    return Scalar(out.contents)
+    out = Scalar(lib.div_val(self.value, other.value).contents)
+    out.prev = (self, other)
+    return out
 
   def __rtruediv__(self, other):
     return other / self
 
   def relu(self):
-    out = lib.relu(self.value)
-    return Scalar(out.contents)
+    out = Scalar(lib.relu(self.value).contents)
+    out.prev = (self, )
+    return out
 
   def sigmoid(self):
-    out = lib.sigmoid(self.value)
-    return Scalar(out.contents)
+    out = Scalar(lib.sigmoid(self.value).contents)
+    out.prev = (self, )
+    return out
   
   def tanh(self):
-    out = lib.tan_h(self.value)
-    return Scalar(out.contents)
+    out = Scalar(lib.tan_h(self.value).contents)
+    out.prev = (self, )
+    return out
   
   def gelu(self):
-    out = lib.gelu(self.value)
-    return Scalar(out.contents)
+    out = Scalar(lib.gelu(self.value).contents)
+    out.prev = (self, )
+    return out
   
   def silu(self):
-    out = lib.silu(self.value)
-    return Scalar(out.contents)
+    out = Scalar(lib.silu(self.value).contents)
+    out.prev = (self, )
+    return out
 
   def swiglu(self):
-    out = lib.swiglu(self.value)
-    return Scalar(out.contents)
+    out = Scalar(lib.swiglu(self.value).contents)
+    out.prev = (self, )
+    return out
   
   def backward(self):
     lib.backward(self.value)
