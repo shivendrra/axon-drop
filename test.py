@@ -1,22 +1,3 @@
-# from drop import Tensor
-
-# a, b = [[1, 5, -6], [1, 6, -3]], [[-2, 0, -6], [7, -2, 0]]
-# a, b = Tensor(a), Tensor(b)
-
-# c = a + b
-# d = c.relu()
-# e = c.tanh()
-
-# e.backward()
-
-# print(c)
-# print(d)
-# print(e)
-
-# print(c.grad)
-# print(d.grad)
-# print(e.grad)
-
 from drop import Scalar
 
 x1, x2 = Scalar(2), Scalar(3)
