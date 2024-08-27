@@ -1,11 +1,13 @@
-#ifndef Scalar_H
-#define Scalar_H
+#ifndef SCALAR_H
+#define SCALAR_H
 
 #include <stdlib.h>
+#include "dtype.h"
 
 typedef struct Scalar {
-  double data;
-  double grad;
+  void* data;
+  void* grad;
+  DType dtype;
   struct Scalar** _prev;
   int _prev_size;
   void (*_backward)(struct Scalar*);
@@ -19,7 +21,7 @@ typedef struct DynamicArray {
 } DynamicArray;
 
 extern "C" {
-  Scalar* initialize_scalars(double data, Scalar** child, int child_size);
+  Scalar* initialize_scalars(double data, DType dtype, Scalar** child, int child_size);
   void noop_backward(Scalar* v);
 
   Scalar* add_val(Scalar* a, Scalar* b);

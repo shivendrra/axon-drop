@@ -1,6 +1,13 @@
 import ctypes
 import os
 
+DTYPE_INT8 = 0
+DTYPE_INT16 = 1
+DTYPE_INT32 = 2
+DTYPE_INT64 = 3
+DTYPE_FLOAT32 = 4
+DTYPE_FLOAT64 = 5
+
 lib_path = os.path.join(os.path.dirname(__file__), 'libscalar.so')
 lib = ctypes.CDLL(lib_path)
 
@@ -8,15 +15,16 @@ class CScalar(ctypes.Structure):
   pass
 
 CScalar._fields_ = [
-  ('data', ctypes.c_double),
-  ('grad', ctypes.c_double),
+  ('data', ctypes.c_void_p),
+  ('grad', ctypes.c_void_p),
+  ('dtype', ctypes.c_int),
   ('_prev', ctypes.POINTER(ctypes.POINTER(CScalar))),
   ('_prev_size', ctypes.c_int),
   ('_backward', ctypes.CFUNCTYPE(None, ctypes.POINTER(CScalar))),
   ('aux', ctypes.c_double),
 ]
 
-lib.initialize_scalars.argtypes = [ctypes.c_double, ctypes.POINTER(ctypes.POINTER(CScalar)), ctypes.c_int]
+lib.initialize_scalars.argtypes = [ctypes.c_double, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(CScalar)), ctypes.c_int]
 lib.initialize_scalars.restype = ctypes.POINTER(CScalar)
 
 lib.add_val.argtypes = [ctypes.POINTER(CScalar), ctypes.POINTER(CScalar)]
@@ -79,3 +87,11 @@ lib.tanh_backward.argtypes = [ctypes.POINTER(CScalar)]
 lib.tanh_backward.restype = None
 lib.sigmoid_backward.argtypes = [ctypes.POINTER(CScalar)]
 lib.sigmoid_backward.restype = None
+
+def create_scalar(value, dtype=DTYPE_FLOAT64):
+  return lib.initialize_scalars(ctypes.c_double(value), ctypes.c_int(dtype), None, 0)
+
+x1 = create_scalar(2.0, DTYPE_FLOAT32)
+x2 = create_scalar(3.5, DTYPE_FLOAT32)
+result = lib.add_val(x1, x2)
+lib.print(result)
