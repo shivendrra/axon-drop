@@ -1,5 +1,5 @@
 from .helpers.shape import *
-from .scalar import Scalar
+from .scalar import scalar
 from .helpers.utils import zeros
 from typing import *
 from .helpers.ops import *
@@ -25,7 +25,7 @@ class tensor:
     def _init(data):
       if isinstance(data, list):
         return [_init(_d) for _d in data]
-      return data if isinstance(data, Scalar) else Scalar(data)
+      return data if isinstance(data, scalar) else scalar(data)
     return _init(data)
 
   @property

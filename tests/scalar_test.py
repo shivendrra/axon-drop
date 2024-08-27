@@ -41,12 +41,12 @@ print(x6.data, x6.grad)
 print(x7.data, x7.grad)
 print(y.data, y.grad)
 
-from drop import Scalar
+from drop import scalar
 
-x1, x2 = Scalar(2), Scalar(3)
-x3, x4 = Scalar(5), Scalar(10)
-x5, x6 = Scalar(1), Scalar(4)
-x7 = Scalar(-2)
+x1, x2 = scalar(2), scalar(3)
+x3, x4 = scalar(5), scalar(10)
+x5, x6 = scalar(1), scalar(4)
+x7 = scalar(-2)
 
 a1 = x1 + x2
 a2 = x3 - x4
