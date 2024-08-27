@@ -69,11 +69,20 @@ lib.backward.restype = None
 lib.print.argtypes = [ctypes.POINTER(CScalar)]
 lib.print.restype = None
 
+lib.cleanup.argtypes = [ctypes.POINTER(CScalar)]
+lib.cleanup.restype = None
+
 lib.get_scalar_data.argtypes = [ctypes.POINTER(CScalar)]
 lib.get_scalar_data.restype = ctypes.c_double
 
 lib.get_scalar_grad.argtypes = [ctypes.POINTER(CScalar)]
 lib.get_scalar_grad.restype = ctypes.c_double
+
+lib.set_scalar_data.argtypes = [ctypes.POINTER(CScalar), ctypes.c_double]
+lib.set_scalar_data.restype = None
+
+lib.set_scalar_grad.argtypes = [ctypes.POINTER(CScalar), ctypes.c_double]
+lib.set_scalar_grad.restype = None
 
 lib.add_backward.argtypes = [ctypes.POINTER(CScalar)]
 lib.add_backward.restype = None
@@ -87,11 +96,3 @@ lib.tanh_backward.argtypes = [ctypes.POINTER(CScalar)]
 lib.tanh_backward.restype = None
 lib.sigmoid_backward.argtypes = [ctypes.POINTER(CScalar)]
 lib.sigmoid_backward.restype = None
-
-def create_scalar(value, dtype=DTYPE_FLOAT64):
-  return lib.initialize_scalars(ctypes.c_double(value), ctypes.c_int(dtype), None, 0)
-
-x1 = create_scalar(2.0, DTYPE_FLOAT32)
-x2 = create_scalar(3.5, DTYPE_FLOAT32)
-result = lib.add_val(x1, x2)
-lib.print(result)

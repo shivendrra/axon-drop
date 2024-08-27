@@ -310,3 +310,11 @@ double get_scalar_data(Scalar* v) {
 double get_scalar_grad(Scalar* v) {
   return get_data_as_double(v->grad, v->dtype);
 }
+
+void set_scalar_data(Scalar* v, double value) {
+  v->data = initialize_data(value, v->dtype);
+}
+
+void set_scalar_grad(Scalar* v, double value) {
+  v->grad = initialize_data(value, v->dtype);
+}

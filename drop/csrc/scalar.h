@@ -54,6 +54,8 @@ extern "C" {
   void cleanup(Scalar* v);
   double get_scalar_data(Scalar* v);
   double get_scalar_grad(Scalar* v);
+  void set_scalar_data(Scalar* v, double value);
+  void set_scalar_grad(Scalar* v, double value);
 }
 
 #endif

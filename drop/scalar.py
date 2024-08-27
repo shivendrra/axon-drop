@@ -1,46 +1,73 @@
 from .cbase import CScalar, lib
+from .cbase import DTYPE_FLOAT32, DTYPE_FLOAT64, DTYPE_INT16, DTYPE_INT32, DTYPE_INT64, DTYPE_INT8
+import ctypes
+from typing import *
+
+int8 = DTYPE_INT8
+int16 = DTYPE_INT16
+int32 = DTYPE_INT32
+int64 = DTYPE_INT64
+float32 = DTYPE_FLOAT32
+float64 = DTYPE_FLOAT64
 
 class Scalar:
-  def __init__(self, data):
+  int8 = int8
+  int16 = int16 
+  int32 = int32 
+  int64 = int64 
+  float32 = float32
+  float64 = float64
+
+  def __init__(self, data:Union[int, float], dtype=None):
     if isinstance(data, CScalar):
       self.value = data
     else:
-      self.value = lib.initialize_scalars(float(data), None, 0)
+      dtype = dtype if dtype is not None else DTYPE_FLOAT32
+      self.value = lib.initialize_scalars(ctypes.c_double(data), ctypes.c_int(dtype), None, 0)
     self.prev = set()
 
   @property
   def data(self):
-    if isinstance(self.value, CScalar):
-      return self.value.data
-    else:
-      return self.value.contents.data
+    return lib.get_scalar_data(self.value)
 
   @data.setter
   def data(self, new_data):
-    if isinstance(self.value, CScalar):
-      self.value.data = float(new_data)
-    else:
-      self.value.contents.data = float(new_data)
+    lib.set_scalar_data(self.value, new_data)
 
   @property
   def grad(self):
-    if isinstance(self.value, CScalar):
-      return self.value.grad
-    else:
-      return self.value.contents.grad
+    return lib.get_scalar_grad(self.value)
   
   @grad.setter
   def grad(self, new_grad):
+    lib.set_scalar_grad(self.value, new_grad)
+
+  @property
+  def dtype(self):
     if isinstance(self.value, CScalar):
-      self.value.grad = float(new_grad)
+      dtype = self.value.dtype
     else:
-      self.value.contents.grad = float(new_grad)
+      dtype = self.value.contents.dtype
+    if dtype == 0:
+      return f"scalar.int8"
+    elif dtype == 1:
+      return f"scalar.int16"
+    elif dtype == 2:
+      return f"scalar.int32"
+    elif dtype == 3:
+      return f"scalar.int64"
+    elif dtype == 4:
+      return f"scalar.float32"
+    elif dtype == 5:
+      return f"scalar.float64"
 
   def __repr__(self):
-    return f"Scalar(data={self.data:.4f}, grad={self.grad:.4f})"
+    return self.__str__()
 
   def __str__(self):
-    return self.__repr__()
+    data_value = lib.get_scalar_data(self.value)
+    grad_value = lib.get_scalar_grad(self.value)
+    return f"Scalar(data={data_value:.4f}, grad={grad_value:.4f})"
 
   def __add__(self, other):
     if isinstance(other, Scalar):
