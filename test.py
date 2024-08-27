@@ -1,28 +1,31 @@
 import drop
+from drop import tensor
 
-x1, x2 = drop.scalar(2, dtype=drop.int16), drop.scalar(3, dtype=drop.int16)
-x3, x4 = drop.scalar(5, dtype=drop.int16), drop.scalar(10, dtype=drop.int16)
-x5, x6 = drop.scalar(1, dtype=drop.int16), drop.scalar(4, dtype=drop.int16)
-x7 = drop.scalar(-2, dtype=drop.int16)
+a = tensor([[2, 4, 5, -4], [-3, 0, 9, -1]], dtype=drop.float32)
+b = tensor([[1, 0, -2, 0], [-1, 10, -2, 4]], dtype=drop.float32)
 
-a1 = x1 + x2
-a2 = x3 - x4
-a3 = a1 * a2
-a4 = a3 ** 2
-a5 = x5 * x6
-a6 = a5.sigmoid()
-a7 = x7.tanh()
-a8 = a4 + a6
-a9 = a8 + a7
-y = a9.relu()
+c = a + b
+d = c.tanh()
+e = d.silu()
+f = e ** 2
+g = f.sigmoid()
+h = g.sum()
 
-y.backward()
+h.backward()
 
-print("x1: ", x1)
-print("x2: ", x2)
-print("x3: ", x3)
-print("x4: ", x4)
-print("x5: ", x5)
-print("x6: ", x6)
-print("x7: ", x7)
-print("y: ",y)
+print("a.grad:")
+print(a.grad)
+print("\nb.grad:")
+print(b.grad)
+print("\nc.grad:")
+print(c.grad)
+print("\nd.grad:")
+print(d.grad)
+print("\ne.grad:")
+print(e.grad)
+print("\nf.grad:")
+print(f.grad)
+print("\ng.grad:")
+print(g.grad)
+print("\nh.grad:")
+print(h.grad)

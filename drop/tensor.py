@@ -11,22 +11,23 @@ def compute_grad(self):
     return data.grad
   return tensor(_compute_grad(self.data), requires_grad=False)
 
+def initialize_data(data, dtype):
+  def _init(data):
+    if isinstance(data, list):
+      return [_init(_d) for _d in data]
+    return data if isinstance(data, scalar) else scalar(data, dtype)
+  return _init(data)
+
 class tensor:
-  def __init__(self, *data, requires_grad=True) -> None:
+  def __init__(self, *data, dtype:Optional[Literal['int8', 'int16', 'int32', 'int64', 'float32', 'float64']]=None, requires_grad=True) -> None:
     data = data[0] if len(data) == 1 and isinstance(data[0], list) else list(data)
-    self.data = self.initialize_data(data)
+    self.data = initialize_data(data, dtype)
+    self.dtype = dtype
     self.shape = self.shape()
     self.ndim = len(self.shape)
     self.requires_grad = requires_grad
     self.prev = set() if requires_grad else None
     self.grad_fn = "<NotSet>"
-
-  def initialize_data(self, data):
-    def _init(data):
-      if isinstance(data, list):
-        return [_init(_d) for _d in data]
-      return data if isinstance(data, scalar) else scalar(data)
-    return _init(data)
 
   @property
   def grad(self):
@@ -43,7 +44,7 @@ class tensor:
       return f"tensor([{data_str}])"
 
     data_str = ',\n\t'.join(['[' + ', '.join(map(str, _repr(row))) + ']' for row in self.data])
-    return f"tensor([{data_str}])"
+    return f"tensor([{data_str}])" if self.grad_fn == "<NotSet>" else f"tensor([{data_str}], grad_fn={self.grad_fn})"
 
   def __repr__(self) -> str:
     return f"tensor({self.data})"
@@ -81,7 +82,7 @@ class tensor:
       if isinstance(a, list):
         return [_add(_a, _b) for _a, _b in zip(a, b)]
       return a + b
-    out = tensor(_add(self.data, other.data))
+    out = tensor(_add(self.data, other.data), dtype=self.dtype, requires_grad=self.requires_grad)
     out.prev = (self, other)
     out.grad_fn = "<AddBackward>"
     return out
@@ -91,17 +92,23 @@ class tensor:
       if isinstance(a, list):
         return [_mul(_a, _b) for _a, _b in zip(a, b)]
       return a * b
-    out = tensor(_mul(self.data, other.data))
+    out = tensor(_mul(self.data, other.data), dtype=self.dtype, requires_grad=self.requires_grad)
     out.prev = (self, other)
     out.grad_fn = "<MulBackward>"
     return out
   
+  def __matmul__(self, other):
+    out = tensor(matmul(self.data, other.data), dtype=self.dtype, requires_grad=self.requires_grad)
+    out.prev = (self, other)
+    out.grad_fn = "<MatMulBackward>"
+    return out
+
   def __sub__(self, other):
     def _sub(a, b):
       if isinstance(a, list):
         return [_sub(_a, _b) for _a, _b in zip(a, b)]
       return a - b
-    out = tensor(_sub(self.data, other.data))
+    out = tensor(_sub(self.data, other.data), dtype=self.dtype, requires_grad=self.requires_grad)
     out.prev = (self, other)
     out.grad_fn = "<SubBackward>"
     return out
@@ -111,7 +118,7 @@ class tensor:
       if isinstance(a, list):
         return [_div(_a, _b) for _a, _b in zip(a, b)]
       return a / b
-    out = tensor(_div(self.data, other.data))
+    out = tensor(_div(self.data, other.data), dtype=self.dtype, requires_grad=self.requires_grad)
     out.prev = (self, other)
     out.grad_fn = "<DivBackward>"
     return out
@@ -130,7 +137,7 @@ class tensor:
       if isinstance(data, list):
         return [_pow(_d) for _d in data]
       return data ** exp
-    out = tensor(_pow(self.data))
+    out = tensor(_pow(self.data), dtype=self.dtype, requires_grad=self.requires_grad)
     out.prev = (self, )
     out.grad_fn = "<PowBackward>"
     return out
@@ -140,7 +147,7 @@ class tensor:
       if isinstance(data, list):
         return [ops(_d) for _d in data]
       return data.relu()
-    out = tensor(ops(self.data))
+    out = tensor(ops(self.data), dtype=self.dtype, requires_grad=self.requires_grad)
     out.prev = (self, )
     out.grad_fn = "<ReluBackward>"
     return out
@@ -150,7 +157,7 @@ class tensor:
       if isinstance(data, list):
         return [ops(_d) for _d in data]
       return data.tanh()
-    out = tensor(ops(self.data))
+    out = tensor(ops(self.data), dtype=self.dtype, requires_grad=self.requires_grad)
     out.prev = (self, )
     out.grad_fn = "<TanhBackward>"
     return out
@@ -160,7 +167,7 @@ class tensor:
       if isinstance(data, list):
         return [ops(_d) for _d in data]
       return data.gelu()
-    out = tensor(ops(self.data))
+    out = tensor(ops(self.data), dtype=self.dtype, requires_grad=self.requires_grad)
     out.prev = (self, )
     out.grad_fn = "<geluBackward>"
     return out
@@ -170,7 +177,7 @@ class tensor:
       if isinstance(data, list):
         return [ops(_d) for _d in data]
       return data.silu()
-    out = tensor(ops(self.data))
+    out = tensor(ops(self.data), dtype=self.dtype, requires_grad=self.requires_grad)
     out.prev = (self, )
     out.grad_fn = "<SiluBackward>"
     return out
@@ -180,7 +187,7 @@ class tensor:
       if isinstance(data, list):
         return [ops(_d) for _d in data]
       return data.sigmoid()
-    out = tensor(ops(self.data))
+    out = tensor(ops(self.data), dtype=self.dtype, requires_grad=self.requires_grad)
     out.prev = (self, )
     out.grad_fn = "<SigmoidBackward>"
     return out
@@ -190,7 +197,7 @@ class tensor:
       if isinstance(data, list):
         return [ops(_d) for _d in data]
       return data.swiglu()
-    out = tensor(ops(self.data))
+    out = tensor(ops(self.data), dtype=self.dtype, requires_grad=self.requires_grad)
     out.prev = (self, )
     out.grad_fn = "<SwigluBackward>"
     return out
@@ -205,7 +212,7 @@ class tensor:
       out = sum_axis0(self.data)
     else:
       out = sum_axis(self.data, axis, keepdims)
-    out = tensor(out)
+    out = tensor(out, dtype=self.dtype, requires_grad=self.requires_grad)
     out.prev = (self, )
     out.grad_fn = "<SumBackward>"
     return out
@@ -214,4 +221,7 @@ class tensor:
     if self.grad_fn != "<SumBackward>":
       raise ValueError("Backward can only be called through 'Sum' function")
     else:
-      self.data[0].backward()
+      if self.requires_grad:
+        self.data[0].backward()
+      else:
+        raise ValueError("requires_grad is set to False, grads can't be computed")
