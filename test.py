@@ -1,9 +1,9 @@
 import drop
 
-x1, x2 = drop.Scalar(2), drop.Scalar(3)
-x3, x4 = drop.Scalar(5), drop.Scalar(10)
-x5, x6 = drop.Scalar(1), drop.Scalar(4)
-x7 = drop.Scalar(-2)
+x1, x2 = drop.scalar(2, dtype=drop.int16), drop.scalar(3, dtype=drop.int16)
+x3, x4 = drop.scalar(5, dtype=drop.int16), drop.scalar(10, dtype=drop.int16)
+x5, x6 = drop.scalar(1, dtype=drop.int16), drop.scalar(4, dtype=drop.int16)
+x7 = drop.scalar(-2, dtype=drop.int16)
 
 a1 = x1 + x2
 a2 = x3 - x4
@@ -26,7 +26,3 @@ print("x5: ", x5)
 print("x6: ", x6)
 print("x7: ", x7)
 print("y: ",y)
-
-print(x1)
-x1.data = 9
-print(x1)
