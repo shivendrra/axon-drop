@@ -467,10 +467,10 @@ class tensor:
     return out
 
   def backward(self):
-    if self.grad_fn != "<SumBackwards>":
-      raise ValueError("Backward can only be called through 'Sum' function")
-    else:
+    if self.grad_fn == "<SumBackwards>" or self.grad_fn == "<NotSet>":
       if self.requires_grad:
         self.data[0].backward()
       else:
         raise ValueError("requires_grad is set to False, grads can't be computed")
+    else:
+      raise ValueError("Backward can only be called through 'Sum' function")
