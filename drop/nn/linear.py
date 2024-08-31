@@ -16,7 +16,13 @@ class Linear(Module):
 
   def forward(self, x):
     x = x if isinstance(x, tensor) else tensor(x, requires_grad=True)
+    
+    # Debugging print statements to check shapes
+    print(f"\nInput x shape: {x.shape}")
+    print(f"Weight matrix wei shape: {self.wei.shape}")
+
     out = x @ self.wei
+    
     if self.bias is not None:
       out = out + self.bias
     return out

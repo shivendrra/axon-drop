@@ -11,7 +11,7 @@ def compute_grad(self):
     if isinstance(data, list):
       return [_compute_grad(_d) for _d in data]
     return data.grad
-  return tensor(_compute_grad(self.data), requires_grad=False)
+  return _compute_grad(self.data)
 
 def initialize_data(data, dtype):
   def _init(data):
@@ -29,10 +29,14 @@ class tensor:
     self.requires_grad = requires_grad
     self.prev = set() if requires_grad else None
     self.grad_fn = "<NotSet>"
+    self.zero_grad_enabled = False
 
   @property
   def grad(self):
-    return compute_grad(self)
+    if self.zero_grad_enabled:
+      return tensor(zeros(self.shape), requires_grad=False)
+    else:
+      return tensor(compute_grad(self), requires_grad=False)
 
   def __str__(self) -> str:
     def _repr(data):
@@ -136,13 +140,8 @@ class tensor:
     self.grad = None
     self.grad_fn = None
   
-  def zero_grad(self) -> None:
-    def _ops(data):
-      if isinstance(data, list):
-        return [_ops(row) for row in data]
-      else:
-        data.zero_grad()
-    _ops(self.data)
+  def zero_grad(self):
+    self.zero_grad_enabled = True
 
   # unary operations -------------------
 

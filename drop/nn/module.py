@@ -31,8 +31,9 @@ class Module:
 
   def zero_grad(self):
     for param in self.parameters():
-      # print("param: ", param.grad)
-      param.zero_grad()
+      if isinstance(param, tensor):
+        param.zero_grad_enabled = True
+        param.grad.zero_grad()
 
   def parameters(self):
     params = []

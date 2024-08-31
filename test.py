@@ -53,24 +53,25 @@ class MLP(nn.Module):
     return out
 
 model = MLP(3, 10, 1)
-print(model)
 
-out = model(xs)
-loss = (((ys - out) ** 2 )).sum()
-loss.backward()
+# out = model(xs)
+# loss = (((ys - out) ** 2 )).sum()
+# loss.backward()
 
-model.zero_grad()
-for p in model.parameters():
-  p.data -= p.grad * 0.1
+# model.zero_grad()
+# print(model)
+# for p in model.parameters():
+#   p.data -= p.grad * 0.1
+# print(model)
 
-# epochs = 100
-# for k in range(epochs):
-#   out = model(xs)
-#   loss = (((ys - out) ** 2 )).sum()
+epochs = 100
+for k in range(epochs):
+  out = model(xs)
+  loss = (((ys - out) ** 2 )).sum()
 
-#   model.zero_grad()
-#   loss.backward()
+  model.zero_grad()
+  loss.backward()
   
-#   for p in model.parameters():
-#     p.data -= p.grad * 0.001
-#   print(k, " -> ", loss)
+  for p in model.parameters():
+    p.data -= p.grad * 0.001
+  print(k, " -> ", loss)
