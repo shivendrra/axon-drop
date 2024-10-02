@@ -1,14 +1,12 @@
 from ..tensor import tensor
-from ..helpers.utils import randn
 from ..helpers.shape import flatten
 
 class Parameter(tensor):
-  def __init__(self, shape) -> None:
-    data = randn(domain=(-1, 1), shape=shape)
-    super().__init__(data)
+  def __init__(self, data) -> None:
+    super().__init__(data, requires_grad=True)
   
   def zero_grad(self) -> None:
-    self.grad.zero_grad()
+    self.grad = None
   
   def tolist(self) -> list:
     return super().tolist()
@@ -17,7 +15,7 @@ class Parameter(tensor):
     return len(flatten(self.data))
   
   def __repr__(self) -> str:
-    return super().__repr__()
+    return "\nParameter containing:\n" + super().__repr__()
   
   def __str__(self) -> str:
-    return "\nParameter containing:\n" + super().__repr__()
+    return "\nParameters :\n" + super().__str__()

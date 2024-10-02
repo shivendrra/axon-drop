@@ -1,6 +1,6 @@
 from .helpers.shape import *
 from .scalar import scalar
-from .helpers.utils import zeros
+from .helpers.utils import _zeros
 from typing import *
 from .helpers.ops import *
 from copy import deepcopy
@@ -30,11 +30,12 @@ class tensor:
     self.prev = set() if requires_grad else None
     self.grad_fn = "<NotSet>"
     self.zero_grad_enabled = False
+    self.is_scalar = True if self.size == (1,) else False
 
   @property
   def grad(self):
     if self.zero_grad_enabled:
-      return tensor(zeros(self.shape), requires_grad=False)
+      return tensor(_zeros(self.shape), requires_grad=False)
     else:
       return tensor(compute_grad(self), requires_grad=False)
 
@@ -466,10 +467,10 @@ class tensor:
     return out
 
   def backward(self):
-    if self.grad_fn == "<SumBackwards>" or self.grad_fn == "<NotSet>":
+    if self.is_scalar == True:
       if self.requires_grad:
         self.data[0].backward()
       else:
         raise ValueError("requires_grad is set to False, grads can't be computed")
     else:
-      raise ValueError("Backward can only be called through 'Sum' function")
+      raise ValueError("Backward can only be called on scalar values")

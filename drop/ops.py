@@ -1,5 +1,5 @@
 from .tensor import tensor
-from .helpers.utils import zeros
+from .helpers.utils import _zeros
 from .helpers.shape import squeeze, unsqueeze, get_shape
 from typing import *
 
@@ -31,7 +31,7 @@ def stack(data: tuple[tensor, tensor], axis: int=0) -> tensor:
   # new shape after stacking & initilization
   new_shape = list(base_shape[:])
   new_shape.insert(axis, len(data))
-  new_data = zeros(new_shape)
+  new_data = _zeros(new_shape)
 
   def insert_data(new_data, tensors, axis, indices=[]):
     if len(indices) == len(new_shape):
@@ -62,7 +62,7 @@ def concat(data: tuple[tensor, tensor], axis: int=0) -> tensor:
   
   new_shape = base_shape[:]
   new_shape[axis] *= len(data)
-  new_data = zeros(new_shape)
+  new_data = _zeros(new_shape)
 
   def set_element(data, indices, value):
     for idx in indices[:-1]:

@@ -33,14 +33,16 @@
 import drop
 import drop.nn as nn
 
+# Input and target tensors
 xs = drop.tensor([
   [2.0, 3.0, -1.0],
   [3.0, 0.0, -0.5],
   [0.5, 1.0, 1.0],
   [1.0, 1.0, -1.0]
-])
-ys = drop.tensor([1.0, -1.0, -1.0, 1.0])
+], requires_grad=True)
+ys = drop.tensor([1.0, -1.0, -1.0, 1.0], requires_grad=True)
 
+# Define the model
 class MLP(nn.Module):
   def __init__(self, _in, _hidden, _out) -> None:
     super().__init__()
@@ -52,26 +54,17 @@ class MLP(nn.Module):
     out = self.layer2(out)
     return out
 
+# Initialize model
 model = MLP(3, 10, 1)
+epochs = 10
+learning_rate = 0.001
 
-# out = model(xs)
-# loss = (((ys - out) ** 2 )).sum()
-# loss.backward()
-
-# model.zero_grad()
-# print(model)
-# for p in model.parameters():
-#   p.data -= p.grad * 0.1
-# print(model)
-
-epochs = 100
+# Training loop
 for k in range(epochs):
   out = model(xs)
-  loss = (((ys - out) ** 2 )).sum()
-
-  model.zero_grad()
+  loss = (((ys - out) ** 2 ).sum()) / 2
+  # model.zero_grad()
   loss.backward()
-  
+  print(f"Epoch {k}: Loss = {loss}")
   for p in model.parameters():
-    p.data -= p.grad * 0.001
-  print(k, " -> ", loss)
+    p.data -= p.grad * learning_rate
