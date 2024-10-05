@@ -61,6 +61,9 @@ class scalar:
     elif dtype == 5:
       return f"float64"
 
+  def zero_grad(self):
+    self.grad = 0.0
+
   def __repr__(self):
     return f"Scalar(data={self.data}, grad={self.grad})"
 

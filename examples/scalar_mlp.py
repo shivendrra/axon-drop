@@ -1,28 +1,40 @@
-from drop import Scalar, nn
+import drop
+import drop.nn as nn
 
-xs = [
+# Input and target tensors
+xs = drop.tensor([
   [2.0, 3.0, -1.0],
   [3.0, 0.0, -0.5],
   [0.5, 1.0, 1.0],
   [1.0, 1.0, -1.0]
-]
-ys = [1.0, -1.0, -1.0, 1.0]
+], requires_grad=True)
+ys = drop.tensor([1.0, -1.0, -1.0, 1.0], requires_grad=True)
 
-model = nn.MLP(3, [4, 4, 1])
+# Define the model
+class MLP(nn.Module):
+  def __init__(self, _in, _hidden, _out) -> None:
+    super().__init__()
+    self.layer1 = nn.Linear(_in, _hidden, bias=False)
+    self.tanh = nn.Tanh()
+    self.layer2 = nn.Linear(_hidden, _out, bias=False)
+  
+  def forward(self, x):
+    out = self.layer1(x)
+    out = self.tanh(out)
+    out = self.layer2(out)
+    return out
 
+# Initialize model
+model = MLP(3, 10, 1)
 epochs = 100
-for k in range(epochs):
-  out = [model(x) for x in xs]
-  loss = sum((yout - ygt) ** 2 for ygt, yout in zip(ys, out))
+learning_rate = 0.01
 
+# Training loop
+for k in range(epochs):
+  out = model(xs)
+  loss = (((ys - out) ** 2 ).sum()) / 2
   model.zero_grad()
   loss.backward()
-  
+  print(f"Epoch {k}: Loss = {loss.data}")
   for p in model.parameters():
-    p.data -= 0.01 * p.grad
-  print(k, " -> ", loss.data)
-
-out = [model(x) for x in xs]
-print("\n\nfinal outputs: ")
-for i in out:
-  print(i)
+    p.data -= p.grad * learning_rate
