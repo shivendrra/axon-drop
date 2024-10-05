@@ -5,9 +5,6 @@ class Parameter(tensor):
   def __init__(self, data) -> None:
     super().__init__(data, requires_grad=True)
   
-  def zero_grad(self) -> None:
-    self.grad = None
-  
   def tolist(self) -> list:
     return super().tolist()
   

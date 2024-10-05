@@ -8,15 +8,20 @@ import math
 
 def compute_grad(self):
   def _compute_grad(data):
+    # Only return scalar values for gradient data
     if isinstance(data, list):
       return [_compute_grad(_d) for _d in data]
-    return data.grad
+    # Return scalar value, not wrapped in tensor
+    return data.grad if hasattr(data, 'grad') else None
   return _compute_grad(self.data)
 
 def initialize_data(data, dtype):
   def _init(data):
     if isinstance(data, list):
       return [_init(_d) for _d in data]
+    # If the input is a tensor, extract its underlying data to avoid nesting
+    if isinstance(data, tensor):
+      return _init(data.data)
     return data if isinstance(data, scalar) else scalar(data, dtype)
   return _init(data)
 
@@ -29,15 +34,23 @@ class tensor:
     self.requires_grad = requires_grad
     self.prev = set() if requires_grad else None
     self.grad_fn = "<NotSet>"
-    self.zero_grad_enabled = False
     self.is_scalar = True if self.size == (1,) else False
 
   @property
   def grad(self):
-    if self.zero_grad_enabled:
-      return tensor(_zeros(self.shape), requires_grad=False)
-    else:
-      return tensor(compute_grad(self), requires_grad=False)
+    return tensor(compute_grad(self), requires_grad=False)
+
+  def zero_grad(self):
+    """
+    Zeroes the gradients for the entire tensor, setting `grad` to 0.0 for each scalar element.
+    """
+    def _zero_grad(data):
+      if isinstance(data, list):
+        for elem in data:
+          _zero_grad(elem)
+      else:
+        data.zero_grad()
+    _zero_grad(self.data)
 
   def __str__(self) -> str:
     def _repr(data):
