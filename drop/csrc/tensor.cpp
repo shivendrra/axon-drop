@@ -47,6 +47,34 @@ Tensor* initialize_tensor(double *input_data, DType dtype, int *shape, int ndim)
   return self;
 }
 
+void delete_tensor(Tensor* tensor) {
+  if (tensor != NULL) {
+    free(tensor);
+    tensor = NULL;
+  }
+}
+
+void delete_shape(Tensor* tensor) {
+  if (tensor->shape != NULL) {
+    free(tensor->shape);
+    tensor->shape = NULL;
+  }
+}
+
+void delete_strides(Tensor* tensor) {
+  if (tensor->strides != NULL) {
+    free(tensor->strides);
+    tensor->strides = NULL;
+  }
+}
+
+void delete_data(Tensor* tensor) {
+  if (tensor->data != NULL) {
+    free(tensor->data);
+  }
+  tensor->data = NULL;
+}
+
 double get_tensor_data(Tensor* t, int index) {
   return get_scalar_data(&t->data[index]);
 }
@@ -198,6 +226,19 @@ Tensor* sub_tensor(Tensor* a, Tensor* b) {
 }
 
 // power void
+Tensor* pow_tensor(Tensor* a, float exp) {
+  Scalar* data_a;
+  Tensor* out = initialize_tensor(NULL, a->dtype, a->shape, a->ndim);
+  for (int i = 0; i < out->size; ++i) {
+    out->data[i] = *pow_val(&data_a[i], exp);
+  }
+  out->_prev = (Tensor**)malloc(1 * sizeof(Tensor*));
+  out->_prev[0] = a;
+  out->_prev_size = 1;
+
+  free(data_a);
+  return out;
+}
 
 Tensor* neg_tensor(Tensor* a) {
   Scalar* data_a;
@@ -267,4 +308,40 @@ Tensor* tanh_tensor(Tensor* a) {
 
   free(data_a);
   return out;
+}
+
+Tensor* swiglu(Tensor* a) {
+  Scalar* data_a;
+  Tensor* out = initialize_tensor(NULL, a->dtype, a->shape, a->ndim);
+  for (int i = 0; i < out->size; ++i) {
+    out->data[i] = *swiglu(&data_a[i]);
+  }
+  out->_prev = (Tensor**)malloc(1 * sizeof(Tensor*));
+  out->_prev[0] = a;
+  out->_prev_size = 1;
+
+  free(data_a);
+  return out;
+}
+
+Tensor* silu_tensor(Tensor* a) {
+  Scalar* data_a;
+  Tensor* out = initialize_tensor(NULL, a->dtype, a->shape, a->ndim);
+  for (int i = 0; i < out->size; ++i) {
+    out->data[i] = *silu(&data_a[i]);
+  }
+  out->_prev = (Tensor**)malloc(1 * sizeof(Tensor*));
+  out->_prev[0] = a;
+  out->_prev_size = 1;
+
+  free(data_a);
+  return out;
+}
+
+void backward_tensor(Tensor* t) {
+  if (t->size == 1) {   // check if tensor has only one element (scalar)
+    backward(&t->data[0]);
+  } else {
+    fprintf(stderr, "Error: Backward can only be called on scalar values.\n");
+  }
 }

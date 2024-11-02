@@ -28,6 +28,10 @@ extern "C" {
   Tensor* initialize_tensor(double* data, DType dtype, int* shape, int ndim);
   void calculate_strides(Tensor* t);        // calculate strides based on the tensor's shape
   int get_offset(int* index, Tensor* t);    // calculate flattened offset for a given multi-dimensional index
+  void delete_tensor(Tensor* tensor);
+  void delete_shape(Tensor* tensor);
+  void delete_strides(Tensor* tensor);
+  void delete_data(Tensor* tensor);
 
   Tensor* add_tensor(Tensor* a, Tensor* b);
   Tensor* mul_tensor(Tensor* a, Tensor* b);
@@ -38,6 +42,8 @@ extern "C" {
   Tensor* gelu_tensor(Tensor* a);
   Tensor* tanh_tensor(Tensor* a);
   Tensor* sigmoid_tensor(Tensor* a);
+  Tensor* silu_tensor(Tensor* a);
+  Tensor* swiglu_tensor(Tensor* a);
 
   void broadcast_recursive(Scalar* source, Scalar* target, int* source_shape, int* target_shape, int ndim, int source_dim, int target_index, int* strides);
   void broadcast_data(Scalar* data, int* shape, int ndim, Scalar** result, int* target_shape, int target_ndim);
