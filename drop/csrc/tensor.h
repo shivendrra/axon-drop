@@ -1,3 +1,11 @@
+/* 
+  - tensor.h header file for tensor.cpp & Tensor
+  - contains the wrapper over Scalar values & computes autograd for each value
+  - compile it as:
+    -- '.so': g++ -shared -fPIC -o libtensor.so tensor.cpp dtype.cpp scalar.cpp
+    -- '.dll': g++ -shared -o libtensor.dll tensor.cpp dtype.cpp scalar.cpp
+*/
+
 #ifndef TENSOR_H
 #define TENSOR_H
 
