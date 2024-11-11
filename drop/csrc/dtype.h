@@ -14,6 +14,7 @@ enum class DType {
   FLOAT64
 };
 
+size_t dtype_size(DType dtype);
 void* initialize_data(double value, DType dtype);
 void convert_data(void* data, DType from_dtype, DType to_dtype);
 std::string dtype_to_string(DType dtype);

@@ -84,5 +84,5 @@ lib.set_tensor_data.restype = None
 lib.set_tensor_grad.argtypes = [ctypes.POINTER(CTensor), ctypes.c_int, ctypes.c_double]
 lib.set_tensor_grad.restype = None
 
-lib.cleanup_tensor.argtypes = [ctypes.POINTER(CTensor)]
-lib.cleanup_tensor.restype = None
+lib.print_tensor.argtypes = [ctypes.POINTER(CTensor)]
+lib.print_tensor.restype = None

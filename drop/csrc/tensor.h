@@ -63,8 +63,7 @@ extern "C" {
   double get_tensor_grad(Tensor* t, int index);
   void set_tensor_data(Tensor* t, int index, double value);
   void set_tensor_grad(Tensor* t, int index, double value);
-
-  void cleanup_tensor(Tensor* t);
+  void print_tensor(Tensor* t);
 }
 
 #endif

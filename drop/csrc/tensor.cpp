@@ -1,10 +1,16 @@
 #include "tensor.h"
+#include "scalar.h"
+#include "dtype.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
+#include <iomanip>
 #include <algorithm>
+
+const int MAX_ITEMS = 8; // Threshold for truncation
 
 void calculate_strides(Tensor* t) {
   t->strides = (int*)malloc(t->ndim * sizeof(int));
@@ -310,7 +316,7 @@ Tensor* tanh_tensor(Tensor* a) {
   return out;
 }
 
-Tensor* swiglu(Tensor* a) {
+Tensor* swiglu_tensor(Tensor* a) {
   Scalar* data_a;
   Tensor* out = initialize_tensor(NULL, a->dtype, a->shape, a->ndim);
   for (int i = 0; i < out->size; ++i) {
@@ -344,4 +350,63 @@ void backward_tensor(Tensor* t) {
   } else {
     fprintf(stderr, "Error: Backward can only be called on scalar values.\n");
   }
+}
+
+std::string format_element(double element, DType dtype) {
+  std::ostringstream out;
+  if (dtype == DType::INT8 || dtype == DType::INT16 || dtype == DType::INT32 || dtype == DType::INT64) {
+    out << std::fixed << std::setprecision(0) << element; // Integer
+  } else if (dtype == DType::FLOAT32) {
+    out << std::fixed << std::setprecision(3) << element; // Float32
+  } else if (dtype == DType::FLOAT64) {
+    out << std::fixed << std::setprecision(4) << element; // Float64
+  } else {
+    out << element; // default
+  }
+  return out.str();
+}
+
+// function to format & print data recursively
+void print_tensor_recursive(void* data, const int* shape, int ndim, int current_dim, int& index, int level, DType dtype) {
+  if (current_dim == ndim - 1) {
+    std::cout << "[";
+    for (int i = 0; i < shape[current_dim]; ++i) {
+      double value = get_data_as_double(static_cast<char*>(data) + index * dtype_size(dtype), dtype);
+      std::cout << format_element(value, dtype);
+      index++;
+      if (i < shape[current_dim] - 1) {
+        std::cout << ", ";
+      }
+      if (i == MAX_ITEMS / 2 - 1 && shape[current_dim] > MAX_ITEMS) {
+        std::cout << ", ...";
+        index += shape[current_dim] - MAX_ITEMS; // skip to the last part of the array
+        i = shape[current_dim] - MAX_ITEMS / 2 - 1; // adjust i for the end truncation
+      }
+    }
+    std::cout << "]";
+  } else {
+    std::cout << "[";
+    for (int i = 0; i < shape[current_dim]; ++i) {
+      if (i == MAX_ITEMS / 2 && shape[current_dim] > MAX_ITEMS) {
+        std::cout << "  ...\n";
+        i = shape[current_dim] - MAX_ITEMS / 2 - 1; // skip to the last part of the tensor
+      } else {
+        if (i > 0) std::cout << ",\n" << std::string((level + 1) * 2, ' '); // indentation
+        print_tensor_recursive(data, shape, ndim, current_dim + 1, index, level + 1, dtype);
+      }
+    }
+    std::cout << "]";
+  }
+}
+
+void print_tensor(Tensor* t) {
+  if (t == nullptr) {
+    std::cerr << "Error: Tensor is null." << std::endl;
+    return;
+  }
+
+  int index = 0;
+  std::cout << "tensor(";
+  print_tensor_recursive(t->data, t->shape, t->ndim, 0, index, 0, t->dtype);
+  std::cout << ", dtype=" << dtype_to_string(t->dtype) << ")\n";
 }
