@@ -8,7 +8,7 @@ DTYPE_INT64 = 3
 DTYPE_FLOAT32 = 4
 DTYPE_FLOAT64 = 5
 
-lib_path = os.path.join(os.path.dirname(__file__), 'libscalar.so')
+lib_path = os.path.join(os.path.dirname(__file__), './build/libscalar.so')
 lib = ctypes.CDLL(lib_path)
 
 class CScalar(ctypes.Structure):

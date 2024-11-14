@@ -27,7 +27,7 @@ void* initialize_data(double value, DType dtype) {
 }
 
 void convert_data(void* data, DType from_dtype, DType to_dtype) {
-  double value = get_data_as_double(data, from_dtype);
+  double value = get_data_as_double(data, from_dtype, 0);
   set_data_from_double(data, to_dtype, value);
 }
 
@@ -43,15 +43,23 @@ std::string dtype_to_string(DType dtype) {
   }
 }
 
-double get_data_as_double(void* data, DType dtype) {
+double get_data_as_double(void* data, DType dtype, int index) {
   switch (dtype) {
-    case DType::INT8: return *reinterpret_cast<int8_t*>(data);
-    case DType::INT16: return *reinterpret_cast<int16_t*>(data);
-    case DType::INT32: return *reinterpret_cast<int32_t*>(data);
-    case DType::INT64: return *reinterpret_cast<int64_t*>(data);
-    case DType::FLOAT32: return *reinterpret_cast<float*>(data);
-    case DType::FLOAT64: return *reinterpret_cast<double*>(data);
-    default: return 0.0;
+    case DType::INT8:
+      return static_cast<double>(reinterpret_cast<int8_t*>(data)[index]);
+    case DType::INT16:
+      return static_cast<double>(reinterpret_cast<int16_t*>(data)[index]);
+    case DType::INT32:
+      return static_cast<double>(reinterpret_cast<int32_t*>(data)[index]);
+    case DType::INT64:
+      return static_cast<double>(reinterpret_cast<int64_t*>(data)[index]);
+    case DType::FLOAT32:
+      return static_cast<double>(reinterpret_cast<float*>(data)[index]);
+    case DType::FLOAT64:
+      return reinterpret_cast<double*>(data)[index];
+    default:
+      std::cerr << "Error: Unsupported data type." << std::endl;
+      return 0.0;
   }
 }
 

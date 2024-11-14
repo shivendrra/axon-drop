@@ -55,8 +55,6 @@ extern "C" {
 
   void broadcast_recursive(Scalar* source, Scalar* target, int* source_shape, int* target_shape, int ndim, int source_dim, int target_index, int* strides);
   void broadcast_data(Scalar* data, int* shape, int ndim, Scalar** result, int* target_shape, int target_ndim);
-
-  void build_tensor_topo(Tensor* t, DynamicTensorArray* topo, DynamicTensorArray* visited);
   void backward_tensor(Tensor* t);
 
   double get_tensor_data(Tensor* t, int index);

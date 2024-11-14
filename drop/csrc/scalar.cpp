@@ -27,8 +27,8 @@ Scalar* initialize_scalars(double data_value, DType dtype, Scalar** child, int c
 
 void add_backward(Scalar* self) {
   if (self->_prev_size == 2) {
-    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype) + get_data_as_double(self->grad, self->dtype));
-    set_data_from_double(self->_prev[1]->grad, self->_prev[1]->dtype, get_data_as_double(self->_prev[1]->grad, self->_prev[1]->dtype) + get_data_as_double(self->grad, self->dtype));
+    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_double(self->grad, self->dtype, 0));
+    set_data_from_double(self->_prev[1]->grad, self->_prev[1]->dtype, get_data_as_double(self->_prev[1]->grad, self->_prev[1]->dtype, 0) + get_data_as_double(self->grad, self->dtype, 0));
   }
 }
 
@@ -37,7 +37,7 @@ Scalar* add_val(Scalar* a, Scalar* b) {
   child[0] = a;
   child[1] = b;
 
-  double result = get_data_as_double(a->data, a->dtype) + get_data_as_double(b->data, b->dtype);
+  double result = get_data_as_double(a->data, a->dtype, 0) + get_data_as_double(b->data, b->dtype, 0);
   Scalar* out = initialize_scalars(result, a->dtype, child, 2);
   out->_backward = add_backward;
   return out;
@@ -45,10 +45,10 @@ Scalar* add_val(Scalar* a, Scalar* b) {
 
 void mul_backward(Scalar* self) {
   if (self->_prev_size == 2) {
-    double a = get_data_as_double(self->_prev[0]->data, self->_prev[0]->dtype);
-    double b = get_data_as_double(self->_prev[1]->data, self->_prev[1]->dtype);
-    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype) + get_data_as_double(self->grad, self->dtype) * b);
-    set_data_from_double(self->_prev[1]->grad, self->_prev[1]->dtype, get_data_as_double(self->_prev[1]->grad, self->_prev[1]->dtype) + get_data_as_double(self->grad, self->dtype) * a);
+    double a = get_data_as_double(self->_prev[0]->data, self->_prev[0]->dtype, 0);
+    double b = get_data_as_double(self->_prev[1]->data, self->_prev[1]->dtype, 0);
+    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_double(self->grad, self->dtype, 0) * b);
+    set_data_from_double(self->_prev[1]->grad, self->_prev[1]->dtype, get_data_as_double(self->_prev[1]->grad, self->_prev[1]->dtype, 0) + get_data_as_double(self->grad, self->dtype, 0) * a);
   }
 }
 
@@ -57,7 +57,7 @@ Scalar* mul_val(Scalar* a, Scalar* b) {
   child[0] = a;
   child[1] = b;
 
-  double result = get_data_as_double(a->data, a->dtype) * get_data_as_double(b->data, b->dtype);
+  double result = get_data_as_double(a->data, a->dtype, 0) * get_data_as_double(b->data, b->dtype, 0);
   Scalar* out = initialize_scalars(result, a->dtype, child, 2);
   out->_backward = mul_backward;
   return out;
@@ -65,10 +65,10 @@ Scalar* mul_val(Scalar* a, Scalar* b) {
 
 void pow_backward(Scalar* self) {
   if (self->_prev_size == 1) {
-    double base = get_data_as_double(self->_prev[0]->data, self->_prev[0]->dtype);
+    double base = get_data_as_double(self->_prev[0]->data, self->_prev[0]->dtype, 0);
     double exponent = self->aux;
     double grad = exponent * pow(base, exponent - 1);
-    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype) + get_data_as_double(self->grad, self->dtype) * grad);
+    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_double(self->grad, self->dtype, 0) * grad);
   }
 }
 
@@ -76,7 +76,7 @@ Scalar* pow_val(Scalar* a, float exp) {
   Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
   child[0] = a;
 
-  double result = pow(get_data_as_double(a->data, a->dtype), exp);
+  double result = pow(get_data_as_double(a->data, a->dtype, 0), exp);
   Scalar* out = initialize_scalars(result, a->dtype, child, 1);
   out->aux = exp;
   out->_backward = pow_backward;
@@ -85,8 +85,8 @@ Scalar* pow_val(Scalar* a, float exp) {
 
 void relu_backward(Scalar* self) {
   if (self->_prev_size == 1) {
-    double grad = (get_data_as_double(self->data, self->dtype) > 0) ? get_data_as_double(self->grad, self->dtype) : 0.0;
-    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype) + grad);
+    double grad = (get_data_as_double(self->data, self->dtype, 0) > 0) ? get_data_as_double(self->grad, self->dtype, 0) : 0.0;
+    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + grad);
   }
 }
 
@@ -94,7 +94,7 @@ Scalar* relu(Scalar* a) {
   Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
   child[0] = a;
 
-  double result = std::max(0.0, get_data_as_double(a->data, a->dtype));
+  double result = std::max(0.0, get_data_as_double(a->data, a->dtype, 0));
   Scalar* out = initialize_scalars(result, a->dtype, child, 1);
   out->_backward = relu_backward;
   return out;
@@ -102,9 +102,9 @@ Scalar* relu(Scalar* a) {
 
 void tanh_backward(Scalar* self) {
   if (self->_prev_size == 1) {
-    double tanh_data = get_data_as_double(self->data, self->dtype);
+    double tanh_data = get_data_as_double(self->data, self->dtype, 0);
     double grad = 1.0 - tanh_data * tanh_data;
-    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype) + get_data_as_double(self->grad, self->dtype) * grad);
+    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_double(self->grad, self->dtype, 0) * grad);
   }
 }
 
@@ -112,7 +112,7 @@ Scalar* tan_h(Scalar* a) {
   Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
   child[0] = a;
 
-  double result = tanh(get_data_as_double(a->data, a->dtype));
+  double result = tanh(get_data_as_double(a->data, a->dtype, 0));
   Scalar* out = initialize_scalars(result, a->dtype, child, 1);
   out->_backward = tanh_backward;
   return out;
@@ -120,9 +120,9 @@ Scalar* tan_h(Scalar* a) {
 
 void sigmoid_backward(Scalar* self) {
   if (self->_prev_size == 1) {
-    double sigmoid_data = get_data_as_double(self->data, self->dtype);
+    double sigmoid_data = get_data_as_double(self->data, self->dtype, 0);
     double grad = sigmoid_data * (1.0 - sigmoid_data);
-    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype) + get_data_as_double(self->grad, self->dtype) * grad);
+    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_double(self->grad, self->dtype, 0) * grad);
   }
 }
 
@@ -130,7 +130,7 @@ Scalar* sigmoid(Scalar* a) {
   Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
   child[0] = a;
 
-  double result = 1.0 / (1.0 + exp(-get_data_as_double(a->data, a->dtype)));
+  double result = 1.0 / (1.0 + exp(-get_data_as_double(a->data, a->dtype, 0)));
   Scalar* out = initialize_scalars(result, a->dtype, child, 1);
   out->_backward = sigmoid_backward;
   return out;
@@ -138,10 +138,10 @@ Scalar* sigmoid(Scalar* a) {
 
 void silu_backward(Scalar* self) {
   if (self->_prev_size == 1) {
-    double x = get_data_as_double(self->_prev[0]->data, self->_prev[0]->dtype);
+    double x = get_data_as_double(self->_prev[0]->data, self->_prev[0]->dtype, 0);
     double sigmoid_x = 1.0 / (1.0 + exp(-x));
     double grad = sigmoid_x * (1.0 + x * (1.0 - sigmoid_x));
-    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype) + get_data_as_double(self->grad, self->dtype) * grad);
+    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_double(self->grad, self->dtype, 0) * grad);
   }
 }
 
@@ -149,7 +149,7 @@ Scalar* silu(Scalar* a) {
   Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
   child[0] = a;
 
-  double x = get_data_as_double(a->data, a->dtype);
+  double x = get_data_as_double(a->data, a->dtype, 0);
   double result = x / (1.0 + exp(-x));
   Scalar* out = initialize_scalars(result, a->dtype, child, 1);
   out->_backward = silu_backward;
@@ -158,9 +158,9 @@ Scalar* silu(Scalar* a) {
 
 void gelu_backward(Scalar* self) {
   if (self->_prev_size == 1) {
-    double x = get_data_as_double(self->_prev[0]->data, self->_prev[0]->dtype);
+    double x = get_data_as_double(self->_prev[0]->data, self->_prev[0]->dtype, 0);
     double grad = 0.5 * (1.0 + erf(x / sqrt(2.0))) + (x * exp(-x * x / 2.0) / sqrt(2.0 * M_PI));
-    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype) + get_data_as_double(self->grad, self->dtype) * grad);
+    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_double(self->grad, self->dtype, 0) * grad);
   }
 }
 
@@ -168,7 +168,7 @@ Scalar* gelu(Scalar* a) {
   Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
   child[0] = a;
 
-  double x = get_data_as_double(a->data, a->dtype);
+  double x = get_data_as_double(a->data, a->dtype, 0);
   double result = 0.5 * x * (1.0 + erf(x / sqrt(2.0)));
   Scalar* out = initialize_scalars(result, a->dtype, child, 1);
   out->_backward = gelu_backward;
@@ -177,9 +177,9 @@ Scalar* gelu(Scalar* a) {
 
 void swiglu_backward(Scalar* self) {
   if (self->_prev_size == 1) {
-    double x = get_data_as_double(self->_prev[0]->data, self->_prev[0]->dtype);
+    double x = get_data_as_double(self->_prev[0]->data, self->_prev[0]->dtype, 0);
     double grad = x / (1.0 + exp(-x));
-    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype) + get_data_as_double(self->grad, self->dtype) * grad);
+    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_double(self->grad, self->dtype, 0) * grad);
   }
 }
 
@@ -187,7 +187,7 @@ Scalar* swiglu(Scalar* a) {
   Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
   child[0] = a;
 
-  double x = get_data_as_double(a->data, a->dtype);
+  double x = get_data_as_double(a->data, a->dtype, 0);
   double result = x * (x / (1.0 + exp(-x)));
   Scalar* out = initialize_scalars(result, a->dtype, child, 1);
   out->_backward = swiglu_backward;
@@ -196,7 +196,7 @@ Scalar* swiglu(Scalar* a) {
 
 void negate_backward(Scalar* self) {
   if (self->_prev_size == 1) {
-    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype) - get_data_as_double(self->grad, self->dtype));
+    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype, 0) - get_data_as_double(self->grad, self->dtype, 0));
   }
 }
 
@@ -204,7 +204,7 @@ Scalar* negate(Scalar* a) {
   Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
   child[0] = a;
 
-  double result = -get_data_as_double(a->data, a->dtype);
+  double result = -get_data_as_double(a->data, a->dtype, 0);
   Scalar* out = initialize_scalars(result, a->dtype, child, 1);
   out->_backward = negate_backward;
   return out;
@@ -216,10 +216,10 @@ Scalar* sub_val(Scalar* a, Scalar* b) {
 
 void div_backward(Scalar* self) {
   if (self->_prev_size == 2) {
-    double a = get_data_as_double(self->_prev[0]->data, self->_prev[0]->dtype);
-    double b = get_data_as_double(self->_prev[1]->data, self->_prev[1]->dtype);
-    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype) + get_data_as_double(self->grad, self->dtype) / b);
-    set_data_from_double(self->_prev[1]->grad, self->_prev[1]->dtype, get_data_as_double(self->_prev[1]->grad, self->_prev[1]->dtype) - get_data_as_double(self->grad, self->dtype) * a / (b * b));
+    double a = get_data_as_double(self->_prev[0]->data, self->_prev[0]->dtype, 0);
+    double b = get_data_as_double(self->_prev[1]->data, self->_prev[1]->dtype, 0);
+    set_data_from_double(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_double(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_double(self->grad, self->dtype, 0) / b);
+    set_data_from_double(self->_prev[1]->grad, self->_prev[1]->dtype, get_data_as_double(self->_prev[1]->grad, self->_prev[1]->dtype, 0) - get_data_as_double(self->grad, self->dtype, 0) * a / (b * b));
   }
 }
 
@@ -228,7 +228,7 @@ Scalar* div_val(Scalar* a, Scalar* b) {
   child[0] = a;
   child[1] = b;
 
-  double result = get_data_as_double(a->data, a->dtype) / get_data_as_double(b->data, b->dtype);
+  double result = get_data_as_double(a->data, a->dtype, 0) / get_data_as_double(b->data, b->dtype, 0);
   Scalar* out = initialize_scalars(result, a->dtype, child, 2);
   out->_backward = div_backward;
   return out;
@@ -292,7 +292,12 @@ void backward(Scalar* self) {
 }
 
 void print(Scalar* v) {
-  std::cout << "Value: " << get_data_as_double(v->data, v->dtype) << ", Grad: " << get_data_as_double(v->grad, v->dtype) << std::endl;
+  if (!v) {
+    std::cerr << "Error: Scalar is null." << std::endl;
+    return;
+  }
+  std::cout << "Value: " << get_data_as_double(v->data, v->dtype, 0)
+            << ", Grad: " << get_data_as_double(v->grad, v->dtype, 0) << std::endl;
 }
 
 void cleanup(Scalar* v) {
@@ -302,13 +307,12 @@ void cleanup(Scalar* v) {
   free(v);
 }
 
-
 double get_scalar_data(Scalar* v) {
-  return get_data_as_double(v->data, v->dtype);
+  return get_data_as_double(v->data, v->dtype, 0);
 }
 
 double get_scalar_grad(Scalar* v) {
-  return get_data_as_double(v->grad, v->dtype);
+  return get_data_as_double(v->grad, v->dtype, 0);
 }
 
 void set_scalar_data(Scalar* v, double value) {
