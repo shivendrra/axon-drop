@@ -33,40 +33,30 @@ class tensor:
   float32 = float32
   float64 = float64
 
-  def __init__(self, data:Union[int, float], dtype:Optional[Literal['int8', 'int16', 'int32', 'int64', 'float32', 'float64']]=None):
-    if isinstance(data, CTensor):
-      self.data = data
-    else:
-      dtype = dtype if dtype is not None else DTYPE_FLOAT32
-      shape = _get_shape(data)
-      shape_ctypes = (ctypes.c_int * len(shape))(*shape)  # Convert shape list to a ctypes array
-      flat_data = _flatten(_init_tensor(data))  # Flatten and convert the data to ctypes
-      data_ctypes = (ctypes.c_double * len(flat_data))(*flat_data)
+  def __init__(self, data: Union[List[float], float, int], dtype: Optional[int] = None):
+    dtype = dtype if dtype is not None else self.float32
+    shape = _get_shape(data)
+    shape_ctypes = (ctypes.c_int * len(shape))(*shape)
+    flat_data = _flatten(data)
+    data_ctypes = (ctypes.c_double * len(flat_data))(*flat_data)
 
-      self.data = lib.initialize_tensor(
-        data_ctypes,
-        ctypes.c_int(dtype),
-        shape_ctypes,
-        ctypes.c_int(len(shape))
-      )
+    self.data = lib.initialize_tensor(data_ctypes, dtype, shape_ctypes, len(shape))
     self.shape = shape
-    self.ndim, self.size = len(self.shape), tuple(self.shape)
-    self.prev, self.grad_fn = None, "<NotSet>"
-    self.strides = lib.calculate_strides(self.data)
+    self.ndim = len(self.shape)
+    self.size = self.data.contents.size
+    lib.calculate_strides(self.data)
+    self.strides = [self.data.contents.strides[i] for i in range(self.ndim)]
   
-  def __str__(self) -> str:
-    # Create a buffer to capture the output
+  def __str__(self):
     buffer = io.StringIO()
-    # Redirect stdout to the buffer
     sys.stdout = buffer
     try:
-      lib.print_tensor(self.data)  # Call the function that prints the tensor
-      output = buffer.getvalue()  # Get the output from the buffer
+      lib.print_tensor(self.data)
+      return buffer.getvalue().strip()
     finally:
-      sys.stdout = sys.__stdout__  # Reset stdout
-    return output.strip()  # Return the captured output as a string
+      sys.stdout = sys.__stdout__
 
-  def __repr__(self) -> str:
+  def __repr__(self):
     return f"tensor({self.data})"
 
   def __add__(self, other):
@@ -88,8 +78,8 @@ class tensor:
     return other * self
 
 
-x = [[1, 3, 5, 5], [1, 3, 5, 5]]
-y = [4, 0, 2, -5]
+x = [[0, -1, 1, 2], [1, 8, 9, 2]]
+y = [4, 0, 2, -2]
 
 x, y = tensor(x, tensor.int8), tensor(y, tensor.int8)
 print(x, '\n', y)

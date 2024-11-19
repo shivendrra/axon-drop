@@ -7,7 +7,6 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
 develop-eggs/
 dist/
 downloads/
@@ -166,7 +165,6 @@ cython_debug/
 # Compiled Object files
 *.slo
 *.lo
-*.o
 *.obj
 
 # Precompiled Headers
@@ -175,7 +173,6 @@ cython_debug/
 
 # Compiled Dynamic libraries
 *.dylib
-*.dll
 
 # Fortran module files
 *.mod

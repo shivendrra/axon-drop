@@ -27,26 +27,42 @@ int get_offset(int* index, Tensor* t) {
 }
 
 Tensor* initialize_tensor(double *input_data, DType dtype, int *shape, int ndim) {
+  // Allocate memory for the Tensor object
   Tensor *self = (Tensor*)malloc(sizeof(Tensor));
   self->dtype = dtype;
   self->ndim = ndim;
+  
+  // Allocate and copy shape
   self->shape = (int*)malloc(ndim * sizeof(int));
   self->size = 1;
-
-  for (int i=0; i<ndim; i++) {
+  for (int i = 0; i < ndim; i++) {
     self->shape[i] = shape[i];
     self->size *= shape[i];
   }
 
+  // Allocate memory for the data array
   self->data = (Scalar*)malloc(self->size * sizeof(Scalar));
-  for (int i=0; i<self->size; i++) {
+  
+  // Initialize the data array and print each element for debugging
+  for (int i = 0; i < self->size; i++) {
     self->data[i] = *initialize_scalars(input_data[i], dtype, NULL, 0);
+    // Debug print statement to display the value of each initialized element
+    std::cout << "Initialized Scalar[" << i << "]: " << self->data[i].data << std::endl;
   }
 
+  // Initialize additional Tensor fields
   self->_prev = NULL;
   self->_prev_size = 0;
 
+  // Calculate strides and print for debugging
   calculate_strides(self);
+  std::cout << "Strides calculated successfully." << std::endl;
+
+  // Debug print statement for the entire tensor after initialization
+  std::cout << "Final tensor data:" << std::endl;
+  for (int i = 0; i < self->size; i++) {
+    std::cout << "Tensor[" << i << "]: " << self->data[i].data << std::endl;
+  }
 
   return self;
 }

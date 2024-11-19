@@ -3,6 +3,7 @@
 #include <cstring>
 #include <cmath>
 
+// returns the size of the given data type
 size_t dtype_size(DType dtype) {
   switch (dtype) {
     case DType::INT8: return sizeof(int8_t);
@@ -15,22 +16,24 @@ size_t dtype_size(DType dtype) {
   }
 }
 
+// initializes a memory block for the given value and dtype
 void* initialize_data(double value, DType dtype) {
   void* data = malloc(dtype_size(dtype));
   if (!data) {
     std::cerr << "Memory allocation failed!" << std::endl;
     return nullptr;
   }
-
   set_data_from_double(data, dtype, value);
   return data;
 }
 
+// converts data from one dtype to another
 void convert_data(void* data, DType from_dtype, DType to_dtype) {
   double value = get_data_as_double(data, from_dtype, 0);
   set_data_from_double(data, to_dtype, value);
 }
 
+// converts dtype to string for display
 std::string dtype_to_string(DType dtype) {
   switch (dtype) {
     case DType::INT8: return "INT8";
@@ -43,26 +46,38 @@ std::string dtype_to_string(DType dtype) {
   }
 }
 
+// retrieves data as double from given index & dtype
 double get_data_as_double(void* data, DType dtype, int index) {
+  double result = 0.0;
+  size_t type_size = dtype_size(dtype);
+  char* raw_data = static_cast<char*>(data) + index * type_size;
   switch (dtype) {
     case DType::INT8:
-      return static_cast<double>(reinterpret_cast<int8_t*>(data)[index]);
+      result = static_cast<double>(*reinterpret_cast<int8_t*>(raw_data));
+      break;
     case DType::INT16:
-      return static_cast<double>(reinterpret_cast<int16_t*>(data)[index]);
+      result = static_cast<double>(*reinterpret_cast<int16_t*>(raw_data));
+      break;
     case DType::INT32:
-      return static_cast<double>(reinterpret_cast<int32_t*>(data)[index]);
+      result = static_cast<double>(*reinterpret_cast<int32_t*>(raw_data));
+      break;
     case DType::INT64:
-      return static_cast<double>(reinterpret_cast<int64_t*>(data)[index]);
+      result = static_cast<double>(*reinterpret_cast<int64_t*>(raw_data));
+      break;
     case DType::FLOAT32:
-      return static_cast<double>(reinterpret_cast<float*>(data)[index]);
+      result = static_cast<double>(*reinterpret_cast<float*>(raw_data));
+      break;
     case DType::FLOAT64:
-      return reinterpret_cast<double*>(data)[index];
+      result = *reinterpret_cast<double*>(raw_data);
+      break;
     default:
       std::cerr << "Error: Unsupported data type." << std::endl;
       return 0.0;
   }
+  return result;
 }
 
+// sets data from & double value based on dtype
 void set_data_from_double(void* data, DType dtype, double value) {
   switch (dtype) {
     case DType::INT8:

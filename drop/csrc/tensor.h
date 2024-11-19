@@ -11,6 +11,7 @@
 
 #include <stdlib.h>
 #include "scalar.h"
+#include "dtype.h"
 
 // struct for a one-dimensional Tensor
 typedef struct Tensor {

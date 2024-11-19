@@ -9,13 +9,21 @@ void noop_backward(Scalar *self) {}
 
 Scalar* initialize_scalars(double data_value, DType dtype, Scalar** child, int child_size) {
   Scalar* self = (Scalar*)malloc(sizeof(Scalar));
+  if (!self) {
+    std::cerr << "Failed to allocate memory for Scalar!" << std::endl;
+    return nullptr;
+  }
+
   self->dtype = dtype;
   self->data = initialize_data(data_value, dtype);
   self->grad = initialize_data(0.0, dtype);
-
   self->_prev_size = child_size;
   if (child_size > 0) {
     self->_prev = (Scalar**)malloc(child_size * sizeof(Scalar*));
+    if (!self->_prev) {
+      std::cerr << "Failed to allocate memory for _prev!" << std::endl;
+      return nullptr;
+    }
     memcpy(self->_prev, child, child_size * sizeof(Scalar*));
   } else {
     self->_prev = NULL;
@@ -23,6 +31,40 @@ Scalar* initialize_scalars(double data_value, DType dtype, Scalar** child, int c
   self->_backward = noop_backward;
   self->aux = 1;
   return self;
+}
+
+double get_scalar_data(Scalar* v) {
+  double data = get_data_as_double(v->data, v->dtype, 0);
+  return data;
+}
+
+double get_scalar_grad(Scalar* v) {
+  double grad = get_data_as_double(v->grad, v->dtype, 0);
+  return grad;
+}
+
+void set_scalar_data(Scalar* v, double value) {
+  v->data = initialize_data(value, v->dtype);
+}
+
+void set_scalar_grad(Scalar* v, double value) {
+  v->grad = initialize_data(value, v->dtype);
+}
+
+void cleanup(Scalar* v) {
+  if (v->_prev != NULL) {
+    free(v->_prev);
+  }
+  free(v);
+}
+
+void print(Scalar* v) {
+  if (!v) {
+    std::cerr << "Error: Scalar is null." << std::endl;
+    return;
+  }
+  std::cout << "Value: " << get_data_as_double(v->data, v->dtype, 0)
+            << ", Grad: " << get_data_as_double(v->grad, v->dtype, 0) << std::endl;
 }
 
 void add_backward(Scalar* self) {
@@ -289,36 +331,4 @@ void backward(Scalar* self) {
   }
 
   dynamic_array_free(&topo);
-}
-
-void print(Scalar* v) {
-  if (!v) {
-    std::cerr << "Error: Scalar is null." << std::endl;
-    return;
-  }
-  std::cout << "Value: " << get_data_as_double(v->data, v->dtype, 0)
-            << ", Grad: " << get_data_as_double(v->grad, v->dtype, 0) << std::endl;
-}
-
-void cleanup(Scalar* v) {
-  if (v->_prev != NULL) {
-    free(v->_prev);
-  }
-  free(v);
-}
-
-double get_scalar_data(Scalar* v) {
-  return get_data_as_double(v->data, v->dtype, 0);
-}
-
-double get_scalar_grad(Scalar* v) {
-  return get_data_as_double(v->grad, v->dtype, 0);
-}
-
-void set_scalar_data(Scalar* v, double value) {
-  v->data = initialize_data(value, v->dtype);
-}
-
-void set_scalar_grad(Scalar* v, double value) {
-  v->grad = initialize_data(value, v->dtype);
 }
