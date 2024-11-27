@@ -1,3 +1,11 @@
+/* 
+  - scalar.h header file for scalar.cpp & Scalar
+  - scalar value autograd performing ops over a single value at a time
+  - compile it as:
+    -- '.so': g++ -shared -fPIC -o libscalar.so scalar.cpp dtype.cpp
+    -- '.dll': g++ -shared -o libscalar.dll scalar.cpp dtype.cpp
+*/
+
 #ifndef SCALAR_H
 #define SCALAR_H
 
@@ -5,15 +13,16 @@
 #include "dtype.h"
 
 typedef struct Scalar {
-  void* data;
-  void* grad;
-  DType dtype;
-  struct Scalar** _prev;
-  int _prev_size;
-  void (*_backward)(struct Scalar*);
-  double aux;
+  void* data;                           // single value for operation
+  void* grad;                           // grad related to the data
+  DType dtype;                          // dtype identifier from dtype.cpp
+  struct Scalar** _prev;                // struct to hold previous/child Scalars
+  int _prev_size;                       // sets the size of prev struct
+  void (*_backward)(struct Scalar*);    // backward function for autograd
+  double aux;                           // auxillary value, sometimes needed
 } Scalar;
 
+// dynamic array struct to manage dynamic scalar storage for autograd
 typedef struct DynamicArray {
   Scalar** data;
   size_t size;
