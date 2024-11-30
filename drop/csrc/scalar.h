@@ -19,7 +19,7 @@ typedef struct Scalar {
   struct Scalar** _prev;                // struct to hold previous/child Scalars
   int _prev_size;                       // sets the size of prev struct
   void (*_backward)(struct Scalar*);    // backward function for autograd
-  double aux;                           // auxillary value, sometimes needed
+  float aux;                           // auxillary value, sometimes needed
 } Scalar;
 
 // dynamic array struct to manage dynamic scalar storage for autograd
@@ -30,7 +30,7 @@ typedef struct DynamicArray {
 } DynamicArray;
 
 extern "C" {
-  Scalar* initialize_scalars(double data, DType dtype, Scalar** child, int child_size);
+  Scalar* initialize_scalars(float data, DType dtype, Scalar** child, int child_size);
   void noop_backward(Scalar* v);
 
   Scalar* add_val(Scalar* a, Scalar* b);
@@ -50,8 +50,6 @@ extern "C" {
   void sigmoid_backward(Scalar* v);
   Scalar* tan_h(Scalar* a);
   void tanh_backward(Scalar* v);
-  Scalar* silu(Scalar* a);
-  void silu_backward(Scalar* v);
   Scalar* gelu(Scalar* a);
   void gelu_backward(Scalar* v);
   Scalar* swiglu(Scalar* a);
@@ -61,10 +59,10 @@ extern "C" {
   void backward(Scalar* v);
   void print(Scalar* v);
   void cleanup(Scalar* v);
-  double get_scalar_data(Scalar* v);
-  double get_scalar_grad(Scalar* v);
-  void set_scalar_data(Scalar* v, double value);
-  void set_scalar_grad(Scalar* v, double value);
+  float get_scalar_data(Scalar* v);
+  float get_scalar_grad(Scalar* v);
+  void set_scalar_data(Scalar* v, float value);
+  void set_scalar_grad(Scalar* v, float value);
 }
 
 #endif
