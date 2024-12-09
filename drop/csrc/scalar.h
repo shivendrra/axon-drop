@@ -19,7 +19,8 @@ typedef struct Scalar {
   struct Scalar** _prev;                // struct to hold previous/child Scalars
   int _prev_size;                       // sets the size of prev struct
   void (*_backward)(struct Scalar*);    // backward function for autograd
-  float aux;                           // auxillary value, sometimes needed
+  float aux;                            // auxillary value, sometimes needed
+  char* device;                         // device
 } Scalar;
 
 // dynamic array struct to manage dynamic scalar storage for autograd
@@ -30,8 +31,9 @@ typedef struct DynamicArray {
 } DynamicArray;
 
 extern "C" {
-  Scalar* initialize_scalars(float data, DType dtype, Scalar** child, int child_size);
+  Scalar* initialize_scalars(float data, DType dtype, Scalar** child, int child_size, char* device);
   void noop_backward(Scalar* v);
+  void scalar_to_device(Scalar* a, char* device);
 
   Scalar* add_val(Scalar* a, Scalar* b);
   void add_backward(Scalar* v);

@@ -1,5 +1,6 @@
 /*
-  - scalar.cpp main interface file for Scalar
+  - scalar.cpp
+  maininterface file for Scalar class
   - contains the initiliaztion, device switching logics for Scalar, switch-cases for device change,
   dtype & result changes.
   - also contains the main underlying autograd logic that works on scalar level, so we don't
@@ -11,26 +12,35 @@
 #include <cstring>
 #include <iostream>
 #include "scalar.h"
+#include "scalar_cpu.h"
 #include "dtype.h"
+#include "scalar_cuda.h"
 
 void noop_backward(Scalar *self) {}
 
-Scalar* initialize_scalars(float data_value, DType dtype, Scalar** child, int child_size) {
+Scalar* initialize_scalars(float data_value, DType dtype, Scalar** child, int child_size, char* device) {
   Scalar* self = (Scalar*)malloc(sizeof(Scalar));
   if (!self) {
-    std::cerr << "Failed to allocate memory for Scalar!" << std::endl;
-    return nullptr;
+    fprintf(stderr, "Memory allocation for Scalar Failed!\n");
+    exit(1);
   }
 
   self->dtype = dtype;
   self->data = initialize_data(data_value, dtype);
   self->grad = initialize_data(0.0, dtype);
   self->_prev_size = child_size;
+  self->device = (char*)malloc(strlen(device) + 1);
+  if (device != NULL) {
+    strcpy(self->device, device);
+  } else {
+    fprintf(stderr, "Memory allocation failed\n");
+    exit(-1);
+  }
   if (child_size > 0) {
     self->_prev = (Scalar**)malloc(child_size * sizeof(Scalar*));
     if (!self->_prev) {
-      std::cerr << "Failed to allocate memory for _prev!" << std::endl;
-      return nullptr;
+      fprintf(stderr, "Failed to allocate memory for _prev!\n");
+      exit(1);
     }
     memcpy(self->_prev, child, child_size * sizeof(Scalar*));
   } else {
@@ -39,6 +49,27 @@ Scalar* initialize_scalars(float data_value, DType dtype, Scalar** child, int ch
   self->_backward = noop_backward;
   self->aux = 1;
   return self;
+}
+
+void scalar_to_device(Scalar* a, char* device) {
+  int device_id = 0;
+  char *endptr, *device_type;
+  long num = strtol(device, &endptr, 10);
+  if (*endptr == '\0') {
+    device_id = (int)num;
+    device_type = new char[strlen("cuda") + 1];
+    strcpy(device_type, "cuda");
+  } else {
+    device_type = new char[strlen("cuda") + 1];
+    strcpy(device_type, "cpu");
+  }
+
+  if((strcmp(device_type, "cuda") == 0) && (strcmp(a->device, "cpu") == 0)) {
+    cpu_to_cuda(a, device_id);
+  } else if ((strcmp(device_type, "cpu") == 0) && (strcmp(a->device, "cuda") == 0)) {
+    cuda_to_cpu(a);
+  }
+  free(device_type);
 }
 
 float get_scalar_data(Scalar* v) {
@@ -68,18 +99,11 @@ void cleanup(Scalar* v) {
 
 void print(Scalar* v) {
   if (!v) {
-    std::cerr << "Error: Scalar is null." << std::endl;
-    return;
+    fprintf(stderr, "Scalar is null\n");
+    exit(1);
   }
   std::cout << "Value: " << get_data_as_float(v->data, v->dtype, 0)
             << ", Grad: " << get_data_as_float(v->grad, v->dtype, 0) << std::endl;
-}
-
-void add_backward(Scalar* self) {
-  if (self->_prev_size == 2) {
-    set_data_from_float(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_float(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_float(self->grad, self->dtype, 0));
-    set_data_from_float(self->_prev[1]->grad, self->_prev[1]->dtype, get_data_as_float(self->_prev[1]->grad, self->_prev[1]->dtype, 0) + get_data_as_float(self->grad, self->dtype, 0));
-  }
 }
 
 Scalar* add_val(Scalar* a, Scalar* b) {
@@ -87,18 +111,22 @@ Scalar* add_val(Scalar* a, Scalar* b) {
   child[0] = a;
   child[1] = b;
 
-  float result = get_data_as_float(a->data, a->dtype, 0) + get_data_as_float(b->data, b->dtype, 0);
-  Scalar* out = initialize_scalars(result, a->dtype, child, 2);
-  out->_backward = add_backward;
-  return out;
-}
-
-void mul_backward(Scalar* self) {
-  if (self->_prev_size == 2) {
-    float a = get_data_as_float(self->_prev[0]->data, self->_prev[0]->dtype, 0);
-    float b = get_data_as_float(self->_prev[1]->data, self->_prev[1]->dtype, 0);
-    set_data_from_float(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_float(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_float(self->grad, self->dtype, 0) * b);
-    set_data_from_float(self->_prev[1]->grad, self->_prev[1]->dtype, get_data_as_float(self->_prev[1]->grad, self->_prev[1]->dtype, 0) + get_data_as_float(self->grad, self->dtype, 0) * a);
+  if (strcmp(a->device, b->device) != 0) {
+    fprintf(stderr, "Scalars must be on the same devices: %s and %s\n", a->device, b->device);
+    exit(1);
+  }
+  if (strcmp(a->device, "cpu") == 0) {
+    float out = (float*)malloc(sizeof(float));
+    if (out == NULL) {
+      fprintf(stderr, "Memory allocation failed for output scalar\n");
+      exit(1);
+    }
+    add_scalar_cpu(a, b, out);
+    return initialize_scalars(out, a->dtype, child, 2, a->device);
+  } else {
+    ///////////////////////
+    ///// placeholder /////
+    ///////////////////////
   }
 }
 
@@ -107,149 +135,46 @@ Scalar* mul_val(Scalar* a, Scalar* b) {
   child[0] = a;
   child[1] = b;
 
-  float result = get_data_as_float(a->data, a->dtype, 0) * get_data_as_float(b->data, b->dtype, 0);
-  Scalar* out = initialize_scalars(result, a->dtype, child, 2);
-  out->_backward = mul_backward;
-  return out;
-}
-
-void pow_backward(Scalar* self) {
-  if (self->_prev_size == 1) {
-    float base = get_data_as_float(self->_prev[0]->data, self->_prev[0]->dtype, 0);
-    float exponent = self->aux;
-    float grad = exponent * pow(base, exponent - 1);
-    set_data_from_float(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_float(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_float(self->grad, self->dtype, 0) * grad);
+  if (strcmp(a->device, b->device) != 0) {
+    fprintf(stderr, "Scalars must be on the same devices: %s and %s\n", a->device, b->device);
+    exit(1);
   }
-}
-
-Scalar* pow_val(Scalar* a, float exp) {
-  Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
-  child[0] = a;
-
-  float result = pow(get_data_as_float(a->data, a->dtype, 0), exp);
-  Scalar* out = initialize_scalars(result, a->dtype, child, 1);
-  out->aux = exp;
-  out->_backward = pow_backward;
-  return out;
-}
-
-void relu_backward(Scalar* self) {
-  if (self->_prev_size == 1) {
-    float grad = (get_data_as_float(self->data, self->dtype, 0) > 0) ? get_data_as_float(self->grad, self->dtype, 0) : 0.0;
-    set_data_from_float(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_float(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + grad);
+  if (strcmp(a->device, "cpu") == 0) {
+    float out = (float*)malloc(sizeof(float));
+    if (out == NULL) {
+      fprintf(stderr, "Memory allocation failed for output scalar\n");
+      exit(1);
+    }
+    mul_scalar_cpu(a, b, out);
+    return initialize_scalars(out, a->dtype, child, 2, a->device);
+  } else {
+    ///////////////////////
+    ///// placeholder /////
+    ///////////////////////
   }
-}
-
-Scalar* relu(Scalar* a) {
-  Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
-  child[0] = a;
-
-  float result = get_data_as_float(a->data, a->dtype, 0) > 0 ? get_data_as_float(a->data, a->dtype, 0) : 0.0;
-  Scalar* out = initialize_scalars(result, a->dtype, child, 1);
-  out->_backward = relu_backward;
-  return out;
-}
-
-void tanh_backward(Scalar* self) {
-  if (self->_prev_size == 1) {
-    float tanh_data = get_data_as_float(self->data, self->dtype, 0);
-    float grad = 1.0 - tanh_data * tanh_data;
-    set_data_from_float(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_float(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_float(self->grad, self->dtype, 0) * grad);
-  }
-}
-
-Scalar* tan_h(Scalar* a) {
-  Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
-  child[0] = a;
-
-  float result = tanh(get_data_as_float(a->data, a->dtype, 0));
-  Scalar* out = initialize_scalars(result, a->dtype, child, 1);
-  out->_backward = tanh_backward;
-  return out;
-}
-
-void sigmoid_backward(Scalar* self) {
-  if (self->_prev_size == 1) {
-    float sigmoid_data = get_data_as_float(self->data, self->dtype, 0);
-    float grad = sigmoid_data * (1.0 - sigmoid_data);
-    set_data_from_float(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_float(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_float(self->grad, self->dtype, 0) * grad);
-  }
-}
-
-Scalar* sigmoid(Scalar* a) {
-  Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
-  child[0] = a;
-
-  float result = 1.0 / (1.0 + exp(-get_data_as_float(a->data, a->dtype, 0)));
-  Scalar* out = initialize_scalars(result, a->dtype, child, 1);
-  out->_backward = sigmoid_backward;
-  return out;
-}
-
-void gelu_backward(Scalar* self) {
-  if (self->_prev_size == 1) {
-    float x = get_data_as_float(self->_prev[0]->data, self->_prev[0]->dtype, 0);
-    float grad = 0.5 * (1.0 + erf(x / sqrt(2.0))) + (x * exp(-x * x / 2.0) / sqrt(2.0 * M_PI));
-    set_data_from_float(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_float(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_float(self->grad, self->dtype, 0) * grad);
-  }
-}
-
-Scalar* gelu(Scalar* a) {
-  Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
-  child[0] = a;
-
-  float x = get_data_as_float(a->data, a->dtype, 0);
-  float result = 0.5 * x * (1.0 + erf(x / sqrt(2.0)));
-  Scalar* out = initialize_scalars(result, a->dtype, child, 1);
-  out->_backward = gelu_backward;
-  return out;
-}
-
-void swiglu_backward(Scalar* self) {
-  if (self->_prev_size == 1) {
-    float x = get_data_as_float(self->_prev[0]->data, self->_prev[0]->dtype, 0);
-    float grad = x / (1.0 + exp(-x));
-    set_data_from_float(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_float(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_float(self->grad, self->dtype, 0) * grad);
-  }
-}
-
-Scalar* swiglu(Scalar* a) {
-  Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
-  child[0] = a;
-
-  float x = get_data_as_float(a->data, a->dtype, 0);
-  float result = x * (x / (1.0 + exp(-x)));
-  Scalar* out = initialize_scalars(result, a->dtype, child, 1);
-  out->_backward = swiglu_backward;
-  return out;
-}
-
-void negate_backward(Scalar* self) {
-  if (self->_prev_size == 1) {
-    set_data_from_float(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_float(self->_prev[0]->grad, self->_prev[0]->dtype, 0) - get_data_as_float(self->grad, self->dtype, 0));
-  }
-}
-
-Scalar* negate(Scalar* a) {
-  Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
-  child[0] = a;
-
-  float result = -get_data_as_float(a->data, a->dtype, 0);
-  Scalar* out = initialize_scalars(result, a->dtype, child, 1);
-  out->_backward = negate_backward;
-  return out;
 }
 
 Scalar* sub_val(Scalar* a, Scalar* b) {
-  return add_val(a, negate(b));
-}
+  Scalar** child = (Scalar**)malloc(2 * sizeof(Scalar*));
+  child[0] = a;
+  child[1] = b;
 
-void div_backward(Scalar* self) {
-  if (self->_prev_size == 2) {
-    float a = get_data_as_float(self->_prev[0]->data, self->_prev[0]->dtype, 0);
-    float b = get_data_as_float(self->_prev[1]->data, self->_prev[1]->dtype, 0);
-    set_data_from_float(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_float(self->_prev[0]->grad, self->_prev[0]->dtype, 0) + get_data_as_float(self->grad, self->dtype, 0) / b);
-    set_data_from_float(self->_prev[1]->grad, self->_prev[1]->dtype, get_data_as_float(self->_prev[1]->grad, self->_prev[1]->dtype, 0) - get_data_as_float(self->grad, self->dtype, 0) * a / (b * b));
+  if (strcmp(a->device, b->device) != 0) {
+    fprintf(stderr, "Scalars must be on the same devices: %s and %s\n", a->device, b->device);
+    exit(1);
+  }
+  if (strcmp(a->device, "cpu") == 0) {
+    float out = (float*)malloc(sizeof(float));
+    if (out == NULL) {
+      fprintf(stderr, "Memory allocation failed for output scalar\n");
+      exit(1);
+    }
+    sub_scalar_cpu(a, b, out);
+    return initialize_scalars(out, a->dtype, child, 2, a->device);
+  } else {
+    ///////////////////////
+    ///// placeholder /////
+    ///////////////////////
   }
 }
 
@@ -258,65 +183,21 @@ Scalar* div_val(Scalar* a, Scalar* b) {
   child[0] = a;
   child[1] = b;
 
-  float result = get_data_as_float(a->data, a->dtype, 0) / get_data_as_float(b->data, b->dtype, 0);
-  Scalar* out = initialize_scalars(result, a->dtype, child, 2);
-  out->_backward = div_backward;
-  return out;
-}
-
-void dynamic_array_init(DynamicArray* array) {
-  array->data = (Scalar**)malloc(10 * sizeof(Scalar*));
-  array->size = 0;
-  array->capacity = 10;
-}
-
-void dynamic_array_append(DynamicArray* array, Scalar* self) {
-  if (array->size >= array->capacity) {
-    array->capacity *= 2;
-    array->data = (Scalar**)realloc(array->data, array->capacity * sizeof(Scalar*));
+  if (strcmp(a->device, b->device) != 0) {
+    fprintf(stderr, "Scalars must be on the same devices: %s and %s\n", a->device, b->device);
+    exit(1);
   }
-  array->data[array->size++] = self;
-}
-
-void dynamic_array_free(DynamicArray* array) {
-  free(array->data);
-}
-
-int dynamic_array_contains(DynamicArray* array, Scalar* self) {
-  for (size_t i = 0; i < array->size; ++i) {
-    if (array->data[i] == self) {
-      return 1;
+  if (strcmp(a->device, "cpu") == 0) {
+    float out = (float*)malloc(sizeof(float));
+    if (out == NULL) {
+      fprintf(stderr, "Memory allocation failed for output scalar\n");
+      exit(1);
     }
+    div_scalar_cpu(a, b, out);
+    return initialize_scalars(out, a->dtype, child, 2, a->device);
+  } else {
+    ///////////////////////
+    ///// placeholder /////
+    ///////////////////////
   }
-  return 0;
-}
-
-void build_topo(Scalar* self, DynamicArray* topo, DynamicArray* visited) {
-  if (!dynamic_array_contains(visited, self)) {
-    dynamic_array_append(visited, self);
-    for (int i = 0; i < self->_prev_size; i++) {
-      build_topo(self->_prev[i], topo, visited);
-    }
-    dynamic_array_append(topo, self);
-  }
-}
-
-void backward(Scalar* self) {
-  set_data_from_float(self->grad, self->dtype, 1.0);
-
-  DynamicArray visited;
-  dynamic_array_init(&visited);
-  DynamicArray topo;
-  dynamic_array_init(&topo);
-
-  build_topo(self, &topo, &visited);
-  dynamic_array_free(&visited);
-
-  for (int i = topo.size - 1; i >= 0; --i) {
-    if (topo.data[i]->_backward != NULL) {
-      topo.data[i]->_backward(topo.data[i]);
-    }
-  }
-
-  dynamic_array_free(&topo);
 }
