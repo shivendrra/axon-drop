@@ -60,7 +60,7 @@ void scalar_to_device(Scalar* a, char* device) {
     device_type = new char[strlen("cuda") + 1];
     strcpy(device_type, "cuda");
   } else {
-    device_type = new char[strlen("cuda") + 1];
+    device_type = new char[strlen("cpu") + 1];
     strcpy(device_type, "cpu");
   }
 
