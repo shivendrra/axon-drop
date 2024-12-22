@@ -31,9 +31,8 @@ typedef struct DynamicArray {
 } DynamicArray;
 
 extern "C" {
-  Scalar* initialize_scalars(float data, DType dtype, Scalar** child, int child_size, char* device);
+  Scalar* initialize_scalars(double data, DType dtype, Scalar** child, int child_size);
   void noop_backward(Scalar* v);
-  void scalar_to_device(Scalar* a, char* device);
 
   Scalar* add_val(Scalar* a, Scalar* b);
   void add_backward(Scalar* v);
@@ -61,10 +60,10 @@ extern "C" {
   void backward(Scalar* v);
   void print(Scalar* v);
   void cleanup(Scalar* v);
-  float get_scalar_data(Scalar* v);
-  float get_scalar_grad(Scalar* v);
-  void set_scalar_data(Scalar* v, float value);
-  void set_scalar_grad(Scalar* v, float value);
+  double get_scalar_data(Scalar* v);
+  double get_scalar_grad(Scalar* v);
+  void set_scalar_data(Scalar* v, double value);
+  void set_scalar_grad(Scalar* v, double value);
 }
 
 #endif
