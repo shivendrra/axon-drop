@@ -43,6 +43,7 @@ extern "C" {
   Scalar* negate(Scalar* a);
   Scalar* sub_val(Scalar* a, Scalar* b);
   Scalar* div_val(Scalar* a, Scalar* b);
+  Scalar* equal_val(Scalar* a, Scalar* b);
 
   Scalar* relu(Scalar* a);
   void relu_backward(Scalar* v);
@@ -50,6 +51,10 @@ extern "C" {
   void sigmoid_backward(Scalar* v);
   Scalar* tan_h(Scalar* a);
   void tanh_backward(Scalar* v);
+  Scalar* sin_val(Scalar* a);
+  void sin_backward(Scalar* v);
+  Scalar* cos_val(Scalar* a);
+  void cos_backward(Scalar* v);
   Scalar* silu(Scalar* a);
   void silu_backward(Scalar* v);
   Scalar* gelu(Scalar* a);
