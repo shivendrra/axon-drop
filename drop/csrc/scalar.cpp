@@ -129,7 +129,7 @@ Scalar* tan_h(Scalar* a) {
 
 void cos_backward(Scalar* self) {
   if (self->_prev_size == 1) {
-    float grad = negate(sinf(get_data_as_float(self->data, self->dtype)));
+    float grad = -sinf(get_data_as_float(self->data, self->dtype));
     set_data_from_float(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_float(self->_prev[0]->grad, self->_prev[0]->dtype) + get_data_as_float(self->grad, self->dtype) * grad);
   }
 }
