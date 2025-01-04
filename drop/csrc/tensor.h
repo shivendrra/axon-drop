@@ -22,6 +22,7 @@ typedef struct {
   int size;                     // total no of elements
   int ndim;                     // no of dims
   char* device;                 // device for ops
+  float* aux;             // auxillary copy of data for CUDA ops
 } Tensor;
 
 extern "C" {
@@ -33,6 +34,7 @@ extern "C" {
   void delete_data(Tensor* tensor);
   void delete_device(Tensor* tensor);
   void delete_backstrides(Tensor* tensor);
+  void delete_aux(Tensor* tensor);
 
   Tensor* add_tensor(Tensor* a, Tensor* b);
   Tensor* sub_tensor(Tensor* a, Tensor* b);

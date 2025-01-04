@@ -74,6 +74,14 @@ Tensor* create_tensor(float* data, int* shape, int ndim, char* device, DType dty
   }
   self->dtype = dtype;
   self->device = (char*)malloc(strlen(device) + 1);
+  self->aux = (float*)malloc(self->size * sizeof(float));
+  if (!self->aux) {
+    fprintf(stderr, "Memory allocation failed\n");
+    exit(-1);
+  }
+  for (int i = 0; i < self->size; i++) {
+    self->aux[i] = get_data_as_float(self->data[i]->data, self->dtype);
+  }
   if (device != NULL) {
     strcpy(self->device, device);
   } else {
@@ -145,9 +153,16 @@ void delete_backstrides(Tensor* tensor) {
 }
 
 void delete_device(Tensor* tensor) {
-  if(tensor->device != NULL) {
+  if (tensor->device != NULL) {
     free(tensor->device);
     tensor->device = NULL;
+  }
+}
+
+void delete_aux(Tensor* tensor) {
+  if (tensor->aux != NULL) {
+    free(tensor->aux);
+    tensor->aux = NULL;
   }
 }
 
