@@ -6,6 +6,7 @@
 #include "scalar.h"
 #include "cpu.h"
 #include "dtype.h"
+#include "cuda.h"
 
 Tensor* create_tensor(float* data, int* shape, int ndim, char* device, DType dtype) {
   Tensor* self = (Tensor*)malloc(sizeof(Tensor));
