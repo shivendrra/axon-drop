@@ -23,7 +23,7 @@ class scalar:
       self.value = data
     else:
       dtype = dtype if dtype is not None else DTYPE_FLOAT32
-      self.value = lib.initialize_scalars(ctypes.c_double(data), ctypes.c_int(dtype), None, 0)
+      self.value = lib.initialize_scalars(ctypes.c_float(data), ctypes.c_int(dtype), None, 0)
     self.prev = set()
 
   @property

@@ -2,7 +2,7 @@
 #include <iostream>
 
 int main() {
-Scalar* x1 = initialize_scalars(2.0, DType::FLOAT32, nullptr, 0);
+  Scalar* x1 = initialize_scalars(2.0, DType::FLOAT32, nullptr, 0);
   Scalar* x2 = initialize_scalars(3.0, DType::FLOAT32, nullptr, 0);
   Scalar* x3 = initialize_scalars(5.0, DType::FLOAT32, nullptr, 0);
   Scalar* x4 = initialize_scalars(10.0, DType::FLOAT32, nullptr, 0);
