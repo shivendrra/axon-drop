@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include "dtype.h"
 
+#define M_PI 3.14159f  // defining pi using preprocessor directive
+
 typedef struct Scalar {
   void* data;                           // single value for operation
   void* grad;                           // grad related to the data

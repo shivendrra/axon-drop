@@ -3,46 +3,47 @@
 #include "tensor.h"
 #include "cpu.h"
 #include <stdio.h>
+#include <cstring>
 
 void add_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for (int i = 0; i <= a->size, i++) {
+  for (int i = 0; i <= a->size; i++) {
     Scalar* s_a = &a->data[i];  // Scalar value from a
     Scalar* s_b = &b->data[i];  // Scalar value from b
     
     // perform Scalar ops while preserving prev Scalars for autograd
     // & free the data after replacing the new output with original sample scalar
     // values set in dummy ``out`` tensor
-    Scalar* s_out = *add_val(s_a, s_b);
+    Scalar* s_out = add_val(s_a, s_b);
     out->data[i] = *s_out;  // assign the value to output Tensor
     free(s_out);
   }
 }
 
 void sub_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for (int i = 0; i <= a->size, i++) {
+  for (int i = 0; i <= a->size; i++) {
     Scalar* s_a = &a->data[i];  // Scalar value from a
     Scalar* s_b = &b->data[i];  // Scalar value from b
-    Scalar* s_out = *sub_val(s_a, s_b);
+    Scalar* s_out = sub_val(s_a, s_b);
     out->data[i] = *s_out;  // assign the value to output Tensor
     free(s_out);
   }
 }
 
 void mul_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for (int i = 0; i <= a->size, i++) {
+  for (int i = 0; i <= a->size; i++) {
     Scalar* s_a = &a->data[i];  // Scalar value from a
     Scalar* s_b = &b->data[i];  // Scalar value from b
-    Scalar* s_out = *mul_val(s_a, s_b);
+    Scalar* s_out = mul_val(s_a, s_b);
     out->data[i] = *s_out;  // assign the value to output Tensor
     free(s_out);
   }
 }
 
 void div_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for int(i = 0; i <= a->size; i++) {
+  for (int i = 0; i <= a->size; i++) {
     Scalar* s_a = &a->data[i];
     Scalar* s_b = &b->data[i];
-    Scalar* s_out = *div_val(s_a, s_b);
+    Scalar* s_out = div_val(s_a, s_b);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -78,7 +79,7 @@ void add_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcas
     }
     Scalar* s_a = &a->data[index1];
     Scalar* s_b = &b->data[index2];
-    Scalar* s_out = *add_val(s_a, s_b);
+    Scalar* s_out = add_val(s_a, s_b);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -116,7 +117,7 @@ void sub_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcas
     }
     Scalar* s_a = &a->data[index1];
     Scalar* s_b = &b->data[index2];
-    Scalar* s_out = *sub_val(s_a, s_b);
+    Scalar* s_out = sub_val(s_a, s_b);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -154,7 +155,7 @@ void mul_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcas
     }
     Scalar* s_a = &a->data[index1];
     Scalar* s_b = &b->data[index2];
-    Scalar* s_out = *mul_val(s_a, s_b);
+    Scalar* s_out = mul_val(s_a, s_b);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -192,7 +193,7 @@ void div_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcas
     }
     Scalar* s_a = &a->data[index1];
     Scalar* s_b = &b->data[index2];
-    Scalar* s_out = *div_val(s_a, s_b);
+    Scalar* s_out = div_val(s_a, s_b);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -203,8 +204,8 @@ void div_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcas
 void scalar_mul_tensor_cpu(Tensor* a, Scalar b, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_b = &b->data;
-    Scalar* s_out = *mul_val(s_a, s_b);
+    Scalar* s_b = &b;
+    Scalar* s_out = mul_val(s_a, s_b);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -213,8 +214,8 @@ void scalar_mul_tensor_cpu(Tensor* a, Scalar b, Tensor* out) {
 void scalar_div_tensor_cpu(Tensor* a, Scalar b, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_b = &b->data;
-    Scalar* s_out = *div_val(s_b, s_a);
+    Scalar* s_b = &b;
+    Scalar* s_out = div_val(s_b, s_a);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -223,28 +224,28 @@ void scalar_div_tensor_cpu(Tensor* a, Scalar b, Tensor* out) {
 void tensor_div_scalar_cpu(Tensor* a, Scalar b, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_b = &b->data;
-    Scalar* s_out = *div_val(s_a, s_b);
+    Scalar* s_b = &b;
+    Scalar* s_out = div_val(s_a, s_b);
     out->data[i] = *s_out;
     free(s_out);
   }
 }
 
-void scalar_pow_tensor_cpu(Tensor* base, Scalar a, Tensor* out) {
-  for (int i = 0; i < a->size; i++) {
-    Scalar* s_a = &a->data[i];
-    Scalar* s_b = &b->data;
-    Scalar* s_out = *pow_val(s_b, s_a);
+void scalar_pow_tensor_cpu(Tensor* base, Scalar* a, Tensor* out) {
+  for (int i = 0; i < base->size; i++) {
+    Scalar* s_a = &base->data[i];
+    float s_b = get_data_as_float(a->data, a->dtype);
+    Scalar* s_out = pow_val(s_a, s_b);
     out->data[i] = *s_out;
     free(s_out);
   }
 }
 
-void tensor_pow_scalar_cpu(Tensor* a, Scalar exp, Tensor* out) {
+void tensor_pow_scalar_cpu(Tensor* a, Scalar* exp, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_b = &exp->data;
-    Scalar* s_out = *pow_val(s_a, s_b);
+    float s_b = get_data_as_float(exp->data, exp->dtype);
+    Scalar* s_out = pow_val(s_a, s_b);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -252,7 +253,7 @@ void tensor_pow_scalar_cpu(Tensor* a, Scalar exp, Tensor* out) {
 
 void reassign_tensor_cpu(Tensor* a, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
-    out[i] = a->data[i];
+    out->data[i] = a->data[i];
   }
 }
 
@@ -316,19 +317,14 @@ void make_contiguous_tensor_cpu(Tensor* a, Tensor* out) {
     }
 
     // copy & link Scalars for autograd compatibility
-    out->data[i] = *initialize_scalars(
-      get_scalar_data(&a->data[source_index]),
-      a->dtype,
-      &a->data[source_index],  // link to the original Scalar for autograd
-      1
-    );
+    out->data[i] = *initialize_scalars(get_scalar_data(&a->data[source_index]), a->dtype, &a->data[source_index], 1);
   }
 }
 
 void log_tensor_cpu(Tensor* a, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_out = *log_val(s_a);
+    Scalar* s_out = log_val(s_a);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -337,7 +333,7 @@ void log_tensor_cpu(Tensor* a, Tensor* out) {
 void tanh_tensor_cpu(Tensor* a, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_out = *tan_h(s_a);
+    Scalar* s_out = tan_h(s_a);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -346,7 +342,7 @@ void tanh_tensor_cpu(Tensor* a, Tensor* out) {
 void sigmoid_tensor_cpu(Tensor* a, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_out = *sigmoid(s_a);
+    Scalar* s_out = sigmoid(s_a);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -355,7 +351,7 @@ void sigmoid_tensor_cpu(Tensor* a, Tensor* out) {
 void relu_tensor_cpu(Tensor* a, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_out = *relu(s_a);
+    Scalar* s_out = relu(s_a);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -364,7 +360,7 @@ void relu_tensor_cpu(Tensor* a, Tensor* out) {
 void gelu_tensor_cpu(Tensor* a, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_out = *gelu(s_a);
+    Scalar* s_out = gelu(s_a);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -373,7 +369,7 @@ void gelu_tensor_cpu(Tensor* a, Tensor* out) {
 void swiglu_tensor_cpu(Tensor* a, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_out = *swiglu(s_a);
+    Scalar* s_out = swiglu(s_a);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -382,17 +378,17 @@ void swiglu_tensor_cpu(Tensor* a, Tensor* out) {
 void silu_tensor_cpu(Tensor* a, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_out = *silu(s_a);
+    Scalar* s_out = silu(s_a);
     out->data[i] = *s_out;
     free(s_out);
   }
 }
 
 void equal_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for int(i = 0; i <= a->size; i++) {
+  for (int i = 0; i <= a->size; i++) {
     Scalar* s_a = &a->data[i];
     Scalar* s_b = &b->data[i];
-    Scalar* s_out = *equal_val(s_a, s_b);
+    Scalar* s_out = equal_val(s_a, s_b);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -428,8 +424,8 @@ void equal_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadc
     }
     Scalar* s_a = &a->data[index1];
     Scalar* s_b = &b->data[index2];
-    Scalar* s_out = *equal_val(s_a, s_b);
-    out[i] = *s_out;
+    Scalar* s_out = equal_val(s_a, s_b);
+    out->data[i] = *s_out;
     free(s_out);
   }
   free(strides1);
@@ -439,25 +435,25 @@ void equal_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadc
 void reassign_tensor_cpu(Tensor* a, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_out = *initialize_scalars(get_data_as_float(s_a, s_a->dtype), a->dtype, a->_prev, a->_prev_size);
-    out[i] = *s_a;
-    free(s_a);
+    Scalar* s_out = initialize_scalars(get_data_as_float(s_a, s_a->dtype), a->dtype, s_a->_prev, s_a->_prev_size);
+    out->data[i] = *s_out;
+    free(s_out);
   }
 }
 
 void zeros_like_tensor_cpu(int size, Tensor* out) {
   for (int i = 0; i < size; i++) {
-    Scalar* s_out = *initialize_scalars(0.0f, out->dtype, NULL, 0);
-    out[i] = *s_a;
-    free(s_a);
+    Scalar* s_out = initialize_scalars(0.0f, out->dtype, NULL, 0);
+    out->data[i] = *s_out;
+    free(s_out);
   }
 }
 
 void ones_like_tensor_cpu(int size, Tensor* out) {
   for (int i = 0; i < size; i++) {
-    Scalar* s_out = *initialize_scalars(1.0f, out->dtype, NULL, 0);
-    out[i] = *s_a;
-    free(s_a);
+    Scalar* s_out = initialize_scalars(1.0f, out->dtype, NULL, 0);
+    out->data[i] = *s_out;
+    free(s_out);
   }
 }
 
@@ -483,22 +479,29 @@ void mamtul_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
 void broadcasted_matmul_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcasted_shape, int broadcasted_size) {
   int broadcast_dims = broadcasted_size / (a->shape[0] * b->shape[1]);
   for (int batch = 0; batch < broadcast_dims; batch++) {
-    Tensor a_sub = { .data = &a->data[batch * a->size], .shape = a->shape, .ndim = a->ndim, .dtype = a->dtype };
-    Tensor b_sub = { .data = &b->data[batch * b->size], .shape = b->shape, .ndim = b->ndim, .dtype = b->dtype };
-    Tensor out_sub = { .data = &out->data[batch * a->shape[0] * b->shape[1]], .shape = out->shape, .ndim = out->ndim, .dtype = out->dtype };
+    Tensor a_sub;
+    a_sub.ndim = a->ndim, a_sub.data = &a->data[batch * a->size], a_sub.shape = a->shape, a_sub.dtype = a->dtype;
+    Tensor b_sub;
+    b_sub.ndim = b->ndim, b_sub.data = &b->data[batch * b->size], b_sub.shape = b->shape, b_sub.dtype = b->dtype;
+    Tensor out_sub;
+    out_sub.ndim = out->ndim, out_sub.data = &out->data[batch * a->shape[0] * b->shape[1]], out_sub.shape = out->shape, out_sub.dtype = out->dtype;
+
     matmul_tensor_cpu(&a_sub, &b_sub, &out_sub);
   }
 }
 
 void batched_matmul_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
   for (int batch = 0; batch < a->shape[0]; batch++) {
-    Tensor a_matrix = { .data = &a->data[batch * a->shape[1] * a->shape[2]], .shape = &a->shape[1], .ndim = 2, .dtype = a->dtype };
-    Tensor b_matrix = { .data = &b->data[batch * b->shape[1] * b->shape[2]], .shape = &b->shape[1], .ndim = 2, .dtype = b->dtype };
-    Tensor out_matrix = { .data = &out->data[batch * a->shape[1] * b->shape[2]], .shape = &out->shape[1], .ndim = 2, .dtype = out->dtype };
+    Tensor a_matrix;
+    a_matrix.data = &a->data[batch * a->shape[1] * a->shape[2]], a_matrix.shape = &a->shape[1], a_matrix.ndim = 2, a_matrix.dtype = a->dtype;
+    Tensor b_matrix;
+    b_matrix.data = &b->data[batch * b->shape[1] * b->shape[2]], b_matrix.shape = &b->shape[1], b_matrix.ndim = 2, b_matrix.dtype = b->dtype;
+    Tensor out_matrix;
+    out_matrix.data = &out->data[batch * a->shape[1] * b->shape[2]], out_matrix.shape = &out->shape[1], out_matrix.ndim = 2, out_matrix.dtype = out->dtype;
+
     matmul_tensor_cpu(&a_matrix, &b_matrix, &out_matrix);
   }
 }
-
 
 void transpose_1d_tensor_cpu(Tensor* a, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
@@ -618,7 +621,7 @@ void min_tensor_cpu(Tensor* a, Tensor* out, int size, int* res_shape, int axis) 
     // compute min along a specific axis
     if (axis < 0 || axis >= a->ndim) {
       fprintf(stderr, "Invalid axis specified for min operation.\n");
-      return;
+      exit(EXIT_FAILURE);
     }
 
     int axis_stride = a->strides[axis];
@@ -660,7 +663,7 @@ void sum_tensor_cpu(Tensor* a, Tensor* out, int size, int* res_shape, int axis) 
     // compute sum along a specific axis
     if (axis < 0 || axis >= a->ndim) {
       fprintf(stderr, "Invalid axis specified for sum operation.\n");
-      return;
+      exit(EXIT_FAILURE);
     }
 
     int axis_stride = a->strides[axis];
