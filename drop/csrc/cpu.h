@@ -14,13 +14,13 @@ extern "C" {
   void sub_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcasted_shape, int broadcasted_size);
   void mul_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcasted_shape, int broadcasted_size);
   void div_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcasted_shape, int broadcasted_size);
-  void scalar_mul_tensor_cpu(Tensor* a, Scalar b, Tensor* out);
-  void scalar_div_tensor_cpu(Tensor* a, Scalar b, Tensor* out);
-  void tensor_div_scalar_cpu(Tensor* a, Scalar b, Tensor* out);
-  void scalar_pow_tensor_cpu(Scalar base, Tensor* a, Tensor* out);
-  void tensor_pow_scalar_cpu(Tensor* a, Scalar b, Tensor* out);
+  void scalar_mul_tensor_cpu(Tensor* a, Scalar* b, Tensor* out);
+  void scalar_div_tensor_cpu(Tensor* a, Scalar* b, Tensor* out);
+  void tensor_div_scalar_cpu(Tensor* a, Scalar* b, Tensor* out);
+  void scalar_pow_tensor_cpu(Tensor* a, Scalar* b, Tensor* out);
+  void tensor_pow_scalar_cpu(Tensor* a, Scalar* exp, Tensor* out);
   void matmul_tensor_cpu(Tensor* a, Tensor* b, Tensor* out);
-  void broadcasted_batched_matmul_tensor_cpu(Tensor* a, Tensor* b, Tensor* out);
+  void broadcasted_matmul_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcasted_shape, int broadcasted_size);
   void batched_matmul_tensor_cpu(Tensor* a, Tensor* b, Tensor* out);
   void ones_like_tensor_cpu(int size, Tensor* out);
   void zeros_like_tensor_cpu(int size, Tensor* out);
@@ -28,7 +28,7 @@ extern "C" {
   void transpose_2d_tensor_cpu(Tensor* a, Tensor* out);
   void transpose_3d_tensor_cpu(Tensor* a, Tensor* out);
   void reassign_tensor_cpu(Tensor* a, Tensor* out);
-  void make_contagious_tensor_cpu(Tensor* a, Tensor* out, int* new_strides);
+  void make_contiguous_tensor_cpu(Tensor* a, Tensor* out);
   void equal_tensor_cpu(Tensor* a, Tensor* b, Tensor* out);
   void equal_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcasted_shape, int broadcasted_size);
 

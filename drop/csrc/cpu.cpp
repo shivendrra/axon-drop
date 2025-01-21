@@ -201,40 +201,37 @@ void div_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcas
   free(strides2);
 }
 
-void scalar_mul_tensor_cpu(Tensor* a, Scalar b, Tensor* out) {
+void scalar_mul_tensor_cpu(Tensor* a, Scalar* b, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_b = &b;
-    Scalar* s_out = mul_val(s_a, s_b);
+    Scalar* s_out = mul_val(s_a, b);
     out->data[i] = *s_out;
     free(s_out);
   }
 }
 
-void scalar_div_tensor_cpu(Tensor* a, Scalar b, Tensor* out) {
+void scalar_div_tensor_cpu(Tensor* a, Scalar* b, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_b = &b;
-    Scalar* s_out = div_val(s_b, s_a);
+    Scalar* s_out = div_val(b, s_a);
     out->data[i] = *s_out;
     free(s_out);
   }
 }
 
-void tensor_div_scalar_cpu(Tensor* a, Scalar b, Tensor* out) {
+void tensor_div_scalar_cpu(Tensor* a, Scalar* b, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_b = &b;
-    Scalar* s_out = div_val(s_a, s_b);
+    Scalar* s_out = div_val(s_a, b);
     out->data[i] = *s_out;
     free(s_out);
   }
 }
 
-void scalar_pow_tensor_cpu(Tensor* base, Scalar* a, Tensor* out) {
-  for (int i = 0; i < base->size; i++) {
-    Scalar* s_a = &base->data[i];
-    float s_b = get_data_as_float(a->data, a->dtype);
+void scalar_pow_tensor_cpu(Tensor* a, Scalar* b, Tensor* out) {
+  for (int i = 0; i < a->size; i++) {
+    Scalar* s_a = &a->data[i];
+    float s_b = get_data_as_float(b->data, b->dtype);
     Scalar* s_out = pow_val(s_a, s_b);
     out->data[i] = *s_out;
     free(s_out);
@@ -260,7 +257,7 @@ void reassign_tensor_cpu(Tensor* a, Tensor* out) {
 void make_contiguous_tensor_cpu(Tensor* a, Tensor* out) {
   if (!a || !out) {
     fprintf(stderr, "Null Tensor provided for make_contiguous_tensor_cpu.\n");
-    return;
+    exit(EXIT_FAILURE);
   }
   out->shape = (int*)malloc(a->ndim * sizeof(int));
   if (!out->shape) {
@@ -346,6 +343,24 @@ void sigmoid_tensor_cpu(Tensor* a, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
     Scalar* s_out = sigmoid(s_a);
+    out->data[i] = *s_out;
+    free(s_out);
+  }
+}
+
+void sin_tensor_cpu(Tensor* a, Tensor* out) {
+  for (int i = 0; i < a->size; i++) {
+    Scalar* s_a = &a->data[i];
+    Scalar* s_out = sin_val(s_a);
+    out->data[i] = *s_out;
+    free(s_out);
+  }
+}
+
+void cos_tensor_cpu(Tensor* a, Tensor* out) {
+  for (int i = 0; i < a->size; i++) {
+    Scalar* s_a = &a->data[i];
+    Scalar* s_out = cos_val(s_a);
     out->data[i] = *s_out;
     free(s_out);
   }
@@ -460,7 +475,7 @@ void ones_like_tensor_cpu(int size, Tensor* out) {
   }
 }
 
-void mamtul_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
+void matmul_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
   for (int i = 0; i < a->shape[0]; i++) {
     for (int j = 0; j < b->shape[1]; j++) {
       Scalar* sum = initialize_scalars(0.0f, a->dtype, NULL, 0);
@@ -510,18 +525,15 @@ void transpose_1d_tensor_cpu(Tensor* a, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     out->data[i] = a->data[i];  // simply copying scalars
   }
-  out->shape[0] = a->shape[0];
-  out->ndim = 1;
+  out->shape[0] = a->shape[0], out->ndim = 1;
   out->dtype = a->dtype;
   out->device = strdup(a->device);
 }
 
 void transpose_2d_tensor_cpu(Tensor* a, Tensor* out) {
   int rows = a->shape[0], cols = a->shape[1];
-  out->shape[0] = cols;
-  out->shape[1] = rows;
-  out->ndim = 2;
-  out->dtype = a->dtype;
+  out->shape[0] = cols, out->shape[1] = rows;
+  out->ndim = 2, out->dtype = a->dtype;
   out->device = strdup(a->device);
 
   for (int i = 0; i < rows; i++) {
@@ -533,34 +545,20 @@ void transpose_2d_tensor_cpu(Tensor* a, Tensor* out) {
   }
 }
 
-void transpose_3d_tensor_cpu(Tensor* a, Tensor* out, int axis1, int axis2) {
-  // compute the new shape by swapping the specified axes
-  int new_shape[3] = {a->shape[0], a->shape[1], a->shape[2]};
-  new_shape[axis1] = a->shape[axis2];
-  new_shape[axis2] = a->shape[axis1];
-
-  // updated output tensor properties
-  memcpy(out->shape, new_shape, 3 * sizeof(int));
+void transpose_3d_tensor_cpu(Tensor* a, Tensor* out) {
+  if (a->ndim != 3 || out->ndim != 3) {
+    fprintf(stderr, "Input and output tensors must be 3-dimensional.\n");
+    exit(EXIT_FAILURE);
+  }
+  out->shape[0] = a->shape[2], out->shape[1] = a->shape[1], out->shape[2] = a->shape[0];
   out->ndim = 3;
-  out->dtype = a->dtype;
-  out->device = strdup(a->device);
-
-  // iterating through the 3D tensor & transpose specified axes
-  for (int i = 0; i < new_shape[0]; i++) {
-    for (int j = 0; j < new_shape[1]; j++) {
-      for (int k = 0; k < new_shape[2]; k++) {
-        // computing the input indices based on transpose mapping
-        int indices[3] = {i, j, k};
-        int temp = indices[axis1];
-        indices[axis1] = indices[axis2];
-        indices[axis2] = temp;
-
-        int in_index = indices[0] * (a->shape[1] * a->shape[2]) +
-                       indices[1] * a->shape[2] + indices[2];
-        int out_index = i * (new_shape[1] * new_shape[2]) +
-                        j * new_shape[2] + k;
-
-        out->data[out_index] = a->data[in_index];  // copy Scalars
+  int batch = a->shape[0], rows = a->shape[1], cols = a->shape[2];
+  for (int i = 0; i < batch; i++) {
+    for (int j = 0; j < rows; j++) {
+      for (int k = 0; k< cols; k++) {
+        int in_index = i * rows * cols + j * cols + k;
+        int out_index = k * rows * batch + j * batch + i;
+        out->data[in_index] = a->data[out_index];
       }
     }
   }

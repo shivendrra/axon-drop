@@ -81,7 +81,7 @@ Tensor* create_tensor(float* data, int* shape, int ndim, char* device, DType dty
     exit(-1);
   }
   for (int i = 0; i < self->size; i++) {
-    self->aux[i] = get_data_as_float(self->data[i]->data, self->dtype);
+    self->aux[i] = get_data_as_float(self->data, self->dtype);
   }
   if (device != NULL) {
     strcpy(self->device, device);
@@ -98,17 +98,17 @@ void to_device(Tensor* tensor, char* device) {
   char *end_ptr, *device_type;
   long num = strtol(device, &end_ptr, 10);
   if (*end_ptr == '\0') {
-    deivce_id = (int)num;
+    device_id = (int)num;
     device_type = new char[strlen("cuda") + 1];
     strcpy(device_type, "cuda");
   } else {
     device_type = new char[strlen("cpu") + 1];
     strcpy(device_type, "cpu");
   }
-  if((strcmp(device_type, "cuda") == 0) && (strcmp(a->device, "cpu") == 0)) {
-    cpu_to_cuda(a, device_id);
-  } else if ((strcmp(device_type, "cpu") == 0) && (strcmp(a->device, "cuda") == 0)) {
-    cuda_to_cpu(a);
+  if((strcmp(device_type, "cuda") == 0) && (strcmp(tensor->device, "cpu") == 0)) {
+    cpu_to_cuda(tensor, device_id);
+  } else if ((strcmp(device_type, "cpu") == 0) && (strcmp(tensor->device, "cuda") == 0)) {
+    cuda_to_cpu(tensor);
   }
   free(device_type);
 }
@@ -244,7 +244,7 @@ Tensor* add_broadcasted_tensor(Tensor* a, Tensor* b) {
   for (int i = 0; i < max_ndim; i++) {
     broadcasted_size *= broadcasted_shape[i];
   }
-  Tensor* out = create_tensor(NULL, shape, ndim, a->device, a->dtype);
+  Tensor* out = create_tensor(NULL, broadcasted_shape, max_ndim, a->device, a->dtype);
   if (strcmp(a->device, "cpu") == 0) {
     add_broadcasted_tensor_cpu(a, b, out, broadcasted_shape, broadcasted_size);
   } else {
@@ -276,7 +276,7 @@ Tensor* sub_broadcasted_tensor(Tensor* a, Tensor* b) {
   for (int i = 0; i < max_ndim; i++) {
     broadcasted_size *= broadcasted_shape[i];
   }
-  Tensor* out = create_tensor(NULL, shape, ndim, a->device, a->dtype);
+  Tensor* out = create_tensor(NULL, broadcasted_shape, max_ndim, a->device, a->dtype);
   if (strcmp(a->device, "cpu") == 0) {
     sub_broadcasted_tensor_cpu(a, b, out, broadcasted_shape, broadcasted_size);
   } else {
@@ -308,7 +308,7 @@ Tensor* elemwise_mul_broadcasted_tensor(Tensor* a, Tensor* b) {
   for (int i = 0; i < max_ndim; i++) {
     broadcasted_size *= broadcasted_shape[i];
   }
-  Tensor* out = create_tensor(NULL, shape, ndim, a->device, a->dtype);
+  Tensor* out = create_tensor(NULL, broadcasted_shape, max_ndim, a->device, a->dtype);
   if (strcmp(a->device, "cpu") == 0) {
     mul_broadcasted_tensor_cpu(a, b, out, broadcasted_shape, broadcasted_size);
   } else {
@@ -404,7 +404,7 @@ Tensor* broadcasted_batched_matmul_tensor_cpu(Tensor* a, Tensor* b) {
   }
   Tensor* out = create_tensor(NULL, shape, ndim, a->device, a->dtype);
   if (strcmp(a->device, "cpu") == 0) {
-    broadcasted_matmul_tensor_cpu(a, b, out);
+    broadcasted_matmul_tensor_cpu(a, b, out, shape, size);
   } else {
     broadcasted_matmul_tensor_cuda(a, b, out);
   }
@@ -429,7 +429,7 @@ Tensor* tensor_div_tensor(Tensor* a, Tensor* b) {
   return out;
 }
 
-Tensor* scalar_mul_tensor(Tensor* a, float b) {
+Tensor* scalar_mul_tensor(Tensor* a, Scalar* b) {
   Tensor* out = create_tensor(NULL, a->shape, a->ndim, a->device, a->dtype);
   if (strcmp(a->device, "cpu") == 0) {
     scalar_mul_tensor_cpu(a, b, out);
@@ -439,7 +439,7 @@ Tensor* scalar_mul_tensor(Tensor* a, float b) {
   return out;
 }
 
-Tensor* tensor_div_scalar(Tensor* a, float b) {
+Tensor* tensor_div_scalar(Tensor* a, Scalar* b) {
   Tensor* out = create_tensor(NULL, a->shape, a->ndim, a->device, a->dtype);
   if (strcmp(a->device, "cpu") == 0) {
     tensor_div_scalar_cpu(a, b, out);
@@ -449,17 +449,17 @@ Tensor* tensor_div_scalar(Tensor* a, float b) {
   return out;
 }
 
-Tensor* scalar_div_tensor(float a, Tensor* b) {
-  Tensor* out = create_tensor(NULL, a->shape, a->ndim, a->device, a->dtype);
-  if (strcmp(a->device, "cpu") == 0) {
-    scalar_div_tensor_cpu(a, b, out);
+Tensor* scalar_div_tensor(Scalar* a, Tensor* b) {
+  Tensor* out = create_tensor(NULL, b->shape, b->ndim, b->device, a->dtype);
+  if (strcmp(b->device, "cpu") == 0) {
+    scalar_div_tensor_cpu(b, a, out);
   } else {
     scalar_div_tensor_cuda(a, b, out);
   }
   return out;
 }
 
-Tensor* tensor_pow_scalar(Tensor* a, float exp) {
+Tensor* tensor_pow_scalar(Tensor* a, Scalar* exp) {
   Tensor* out = create_tensor(NULL, a->shape, a->ndim, a->device, a->dtype);
   if (strcmp(a->device, "cpu") == 0) {
     tensor_pow_scalar_cpu(a, exp, out);
@@ -469,10 +469,10 @@ Tensor* tensor_pow_scalar(Tensor* a, float exp) {
   return out;
 }
 
-Tensor* scalar_pow_tensor(float base, Tensor* a) {
+Tensor* scalar_pow_tensor(Scalar* base, Tensor* a) {
   Tensor* out = create_tensor(NULL, a->shape, a->ndim, a->device, a->dtype);
   if (strcmp(a->device, "cpu") == 0) {
-    scalar_pow_tensor_cpu(base, a, out);
+    scalar_pow_tensor_cpu(a, base, out);
   } else {
     scalar_pow_tensor_cuda(base, a, out);
   }
@@ -526,7 +526,6 @@ Tensor* sum_tensor(Tensor* a, int axis, bool keepdim) {
         shape[axis] = 1, ndim = a->ndim;
       }
     }
-    return create_tensor(out, a->shape, a->ndim, a->device, a->dtype);
   } else {
     sum_tensor_cuda(a, out, axis_size, shape, axis);
     if (keepdim) {
@@ -839,7 +838,7 @@ Tensor* equal_broadcasted_tensor(Tensor* a, Tensor* b) {
   for (int i = 0; i < max_ndim; i++) {
     broadcasted_size *= broadcasted_shape[i];
   }
-  Tensor* out = create_tensor(NULL, brodacasted_shape, max_ndim, a->device, a->dtype);
+  Tensor* out = create_tensor(NULL, broadcasted_shape, max_ndim, a->device, a->dtype);
   if (strcmp(a->device, "cpu") == 0) {
     equal_broadcasted_tensor_cpu(a, b, out, broadcasted_shape, broadcasted_size);
   } else {
@@ -851,9 +850,9 @@ Tensor* equal_broadcasted_tensor(Tensor* a, Tensor* b) {
 Tensor* zeros_like_tensor(Tensor* a) {
   Tensor* out = create_tensor(NULL, a->shape, a->ndim, a->device, a->dtype);
   if (strcmp(a->device, "cpu") == 0) {
-    ones_like_tensor_cpu(a, out);
+    ones_like_tensor_cpu(a->size, out);
   } else {
-    ones_like_tensor_cuda(a, out);
+    ones_like_tensor_cuda(a->size, out);
   }
   return out;
 }
@@ -861,9 +860,9 @@ Tensor* zeros_like_tensor(Tensor* a) {
 Tensor* ones_like_tensor(Tensor* a) {
   Tensor* out = create_tensor(NULL, a->shape, a->ndim, a->device, a->dtype);
   if (strcmp(a->device, "cpu") == 0) {
-    ones_like_tensor_cpu(a, out);
+    ones_like_tensor_cpu(a->size, out);
   } else {
-    ones_like_tensor_cuda(a, out);
+    ones_like_tensor_cuda(a->size, out);
   }
   return out;
 }
