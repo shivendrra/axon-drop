@@ -92,6 +92,24 @@ Scalar* pow_val(Scalar* a, float exp) {
   return out;
 }
 
+void log_backward(Scalar* self) {
+  if (self->_prev_size == 1) {
+    float a = get_data_as_float(self->_prev[0]->data, self->_prev[0]->dtype);
+    float grad = 1.0 / a;
+    set_data_from_float(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_float(self->_prev[0]->grad, self->_prev[0]->dtype) + get_data_as_float(self->grad, self->dtype) * grad);
+  }
+}
+
+Scalar* log_val(Scalar* a) {
+  Scalar** child = (Scalar**)malloc(1 * sizeof(Scalar*));
+  child[0] = a;
+
+  float result = log(get_data_as_float(a->data, a->dtype));
+  Scalar* out = initialize_scalars(result, a->dtype, child, 1);
+  out->_backward = log_backward;
+  return out;
+}
+
 void relu_backward(Scalar* self) {
   if (self->_prev_size == 1) {
     float grad = (get_data_as_float(self->data, self->dtype) > 0) ? get_data_as_float(self->grad, self->dtype) : 0.0;

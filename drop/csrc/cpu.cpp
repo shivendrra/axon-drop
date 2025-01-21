@@ -317,7 +317,10 @@ void make_contiguous_tensor_cpu(Tensor* a, Tensor* out) {
     }
 
     // copy & link Scalars for autograd compatibility
-    out->data[i] = *initialize_scalars(get_scalar_data(&a->data[source_index]), a->dtype, &a->data[source_index], 1);
+    Scalar* parent_scalar = &a->data[source_index]; // Create a Scalar* for the parent
+    Scalar* temp_scalar = initialize_scalars(get_scalar_data(parent_scalar), a->dtype, &parent_scalar, 1);
+    out->data[i] = *temp_scalar;
+    cleanup(temp_scalar);
   }
 }
 

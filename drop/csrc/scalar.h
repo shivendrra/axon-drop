@@ -41,6 +41,8 @@ extern "C" {
   void mul_backward(Scalar* v);
   Scalar* pow_val(Scalar* a, float exp);
   void pow_backward(Scalar* v);
+  Scalar* log_val(Scalar* a);
+  void log_backward(Scalar* v);
 
   Scalar* negate(Scalar* a);
   Scalar* sub_val(Scalar* a, Scalar* b);
