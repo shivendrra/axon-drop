@@ -6,7 +6,7 @@
 #include "scalar.h"
 #include "cpu.h"
 #include "dtype.h"
-#include "cuda.h"
+// #include "cuda.h"
 
 Tensor* create_tensor(float* data, int* shape, int ndim, char* device, DType dtype) {
   Tensor* self = (Tensor*)malloc(sizeof(Tensor));
@@ -93,24 +93,32 @@ Tensor* create_tensor(float* data, int* shape, int ndim, char* device, DType dty
   return self;
 }
 
+// void to_device(Tensor* tensor, char* device) {
+//   int device_id = 0;
+//   char *end_ptr, *device_type;
+//   long num = strtol(device, &end_ptr, 10);
+//   if (*end_ptr == '\0') {
+//     device_id = (int)num;
+//     device_type = new char[strlen("cuda") + 1];
+//     strcpy(device_type, "cuda");
+//   } else {
+//     device_type = new char[strlen("cpu") + 1];
+//     strcpy(device_type, "cpu");
+//   }
+//   if((strcmp(device_type, "cuda") == 0) && (strcmp(tensor->device, "cpu") == 0)) {
+//     cpu_to_cuda(tensor, device_id);
+//   } else if ((strcmp(device_type, "cpu") == 0) && (strcmp(tensor->device, "cuda") == 0)) {
+//     cuda_to_cpu(tensor);
+//   }
+//   free(device_type);
+// }
+
 void to_device(Tensor* tensor, char* device) {
-  int device_id = 0;
-  char *end_ptr, *device_type;
-  long num = strtol(device, &end_ptr, 10);
-  if (*end_ptr == '\0') {
-    device_id = (int)num;
-    device_type = new char[strlen("cuda") + 1];
-    strcpy(device_type, "cuda");
-  } else {
-    device_type = new char[strlen("cpu") + 1];
-    strcpy(device_type, "cpu");
+  if(!tensor) {
+    fprintf(stderr, "No Tensor provided!\n");
+    exit(EXIT_FAILURE);
   }
-  if((strcmp(device_type, "cuda") == 0) && (strcmp(tensor->device, "cpu") == 0)) {
-    cpu_to_cuda(tensor, device_id);
-  } else if ((strcmp(device_type, "cpu") == 0) && (strcmp(tensor->device, "cuda") == 0)) {
-    cuda_to_cpu(tensor);
-  }
-  free(device_type);
+  printf("Not available right now!\n");
 }
 
 void delete_tensor(Tensor* tensor) {
@@ -180,7 +188,9 @@ Tensor* add_tensor(Tensor* a, Tensor* b) {
   if (strcmp(a->device, "cpu") == 0) {
     add_tensor_cpu(a, b, out);
   } else {
-    add_tensor_cuda(a, b, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // add_tensor_cuda(a, b, out);
   }
   return out;
 }
@@ -198,7 +208,9 @@ Tensor* sub_tensor(Tensor* a, Tensor* b) {
   if (strcmp(a->device, "cpu") == 0) {
     sub_tensor_cpu(a, b, out);
   } else {
-    sub_tensor_cuda(a, b, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // sub_tensor_cuda(a, b, out);
   }
   return out;
 }
@@ -216,7 +228,9 @@ Tensor* elemwise_mul_tensor(Tensor* a, Tensor* b) {
   if (strcmp(a->device, "cpu") == 0) {
     mul_tensor_cpu(a, b, out);
   } else {
-    mul_tensor_cuda(a, b, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // mul_tensor_cuda(a, b, out);
   }
   return out;
 }
@@ -248,7 +262,9 @@ Tensor* add_broadcasted_tensor(Tensor* a, Tensor* b) {
   if (strcmp(a->device, "cpu") == 0) {
     add_broadcasted_tensor_cpu(a, b, out, broadcasted_shape, broadcasted_size);
   } else {
-    add_broadcasted_tensor_cuda(a, b, out, broadcasted_shape, broadcasted_size);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // add_broadcasted_tensor_cuda(a, b, out, broadcasted_shape, broadcasted_size);
   }
   return out;
 }
@@ -280,7 +296,9 @@ Tensor* sub_broadcasted_tensor(Tensor* a, Tensor* b) {
   if (strcmp(a->device, "cpu") == 0) {
     sub_broadcasted_tensor_cpu(a, b, out, broadcasted_shape, broadcasted_size);
   } else {
-    sub_broadcasted_tensor_cuda(a, b, out, broadcasted_shape, broadcasted_size);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // sub_broadcasted_tensor_cuda(a, b, out, broadcasted_shape, broadcasted_size);
   }
   return out;
 }
@@ -312,7 +330,9 @@ Tensor* elemwise_mul_broadcasted_tensor(Tensor* a, Tensor* b) {
   if (strcmp(a->device, "cpu") == 0) {
     mul_broadcasted_tensor_cpu(a, b, out, broadcasted_shape, broadcasted_size);
   } else {
-    mul_broadcasted_tensor_cuda(a, b, out, broadcasted_shape, broadcasted_size);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // mul_broadcasted_tensor_cuda(a, b, out, broadcasted_shape, broadcasted_size);
   }
   return out;
 }
@@ -346,7 +366,9 @@ Tensor* matmul_tensor(Tensor* a, Tensor* b) {
   if (strcmp(a->device, "cpu") == 0) {
     matmul_tensor_cpu(a, b, out);
   } else {
-    matmul_tensor_cuda(a, b, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // matmul_tensor_cuda(a, b, out);
   }
   return out;
 }
@@ -378,7 +400,9 @@ Tensor* batched_matmul_tensor(Tensor* a, Tensor* b) {
   if (strcmp(a->device, "cpu") == 0) {
     batched_matmul_tensor_cpu(a, b, out);
   } else {
-    batched_matmul_tensor_cuda(a, b, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // batched_matmul_tensor_cuda(a, b, out);
   }
   return out;
 }
@@ -406,7 +430,9 @@ Tensor* broadcasted_batched_matmul_tensor_cpu(Tensor* a, Tensor* b) {
   if (strcmp(a->device, "cpu") == 0) {
     broadcasted_matmul_tensor_cpu(a, b, out, shape, size);
   } else {
-    broadcasted_matmul_tensor_cuda(a, b, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // broadcasted_matmul_tensor_cuda(a, b, out);
   }
   return out;
 }
@@ -424,7 +450,9 @@ Tensor* tensor_div_tensor(Tensor* a, Tensor* b) {
   if (strcmp(a->device, "cpu") == 0) {
     div_tensor_cpu(a, b, out);
   } else {
-    div_tensor_cuda(a, b, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // div_tensor_cuda(a, b, out);
   }
   return out;
 }
@@ -434,7 +462,9 @@ Tensor* scalar_mul_tensor(Tensor* a, Scalar* b) {
   if (strcmp(a->device, "cpu") == 0) {
     scalar_mul_tensor_cpu(a, b, out);
   } else {
-    scalar_mul_tensor_cuda(a, b, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // scalar_mul_tensor_cuda(a, b, out);
   }
   return out;
 }
@@ -444,7 +474,9 @@ Tensor* tensor_div_scalar(Tensor* a, Scalar* b) {
   if (strcmp(a->device, "cpu") == 0) {
     tensor_div_scalar_cpu(a, b, out);
   } else {
-    tensor_div_scalar_cuda(a, b, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // tensor_div_scalar_cuda(a, b, out);
   }
   return out;
 }
@@ -454,7 +486,9 @@ Tensor* scalar_div_tensor(Scalar* a, Tensor* b) {
   if (strcmp(b->device, "cpu") == 0) {
     scalar_div_tensor_cpu(b, a, out);
   } else {
-    scalar_div_tensor_cuda(a, b, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // scalar_div_tensor_cuda(a, b, out);
   }
   return out;
 }
@@ -464,7 +498,9 @@ Tensor* tensor_pow_scalar(Tensor* a, Scalar* exp) {
   if (strcmp(a->device, "cpu") == 0) {
     tensor_pow_scalar_cpu(a, exp, out);
   } else {
-    tensor_pow_scalar_cuda(a, exp, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // tensor_pow_scalar_cuda(a, exp, out);
   }
   return out;
 }
@@ -474,7 +510,9 @@ Tensor* scalar_pow_tensor(Scalar* base, Tensor* a) {
   if (strcmp(a->device, "cpu") == 0) {
     scalar_pow_tensor_cpu(a, base, out);
   } else {
-    scalar_pow_tensor_cuda(base, a, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // scalar_pow_tensor_cuda(base, a, out);
   }
   return out;
 }
@@ -484,7 +522,9 @@ Tensor* log_tensor(Tensor* a) {
   if (strcmp(a->device, "cpu") == 0) {
     log_tensor_cpu(a, out);
   } else {
-    log_tensor_cuda(a, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // log_tensor_cuda(a, out);
   }
   return out;
 }
@@ -527,21 +567,23 @@ Tensor* sum_tensor(Tensor* a, int axis, bool keepdim) {
       }
     }
   } else {
-    sum_tensor_cuda(a, out, axis_size, shape, axis);
-    if (keepdim) {
-      if (axis == -1) {
-        ndim = a->ndim, shape = (int*)malloc((a->ndim) * sizeof(int));
-        for (int i = 0; i < a->size; i++) {
-          shape[i] = 1;
-        }
-      } else {
-        shape = (int*)malloc(a->ndim * sizeof(int));
-        for (int i = 0; i < a->size; i++) {
-          shape[i] = a->shape[i];
-        }
-        shape[axis] = 1, ndim = a->ndim;
-      }
-    }
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // sum_tensor_cuda(a, out, axis_size, shape, axis);
+    // if (keepdim) {
+    //   if (axis == -1) {
+    //     ndim = a->ndim, shape = (int*)malloc((a->ndim) * sizeof(int));
+    //     for (int i = 0; i < a->size; i++) {
+    //       shape[i] = 1;
+    //     }
+    //   } else {
+    //     shape = (int*)malloc(a->ndim * sizeof(int));
+    //     for (int i = 0; i < a->size; i++) {
+    //       shape[i] = a->shape[i];
+    //     }
+    //     shape[axis] = 1, ndim = a->ndim;
+    //   }
+    // }
   }
   return out;
 }
@@ -584,21 +626,23 @@ Tensor* max_tensor(Tensor* a, int axis, bool keepdim) {
       }
     }
   } else {
-    max_tensor_cuda(a, out, axis_size, shape, axis);
-    if (keepdim) {
-      if (axis == -1) {
-        ndim = a->ndim, shape = (int*)malloc((a->ndim) * sizeof(int));
-        for (int i = 0; i < a->size; i++) {
-          shape[i] = 1;
-        }
-      } else {
-        shape = (int*)malloc(a->ndim * sizeof(int));
-        for (int i = 0; i < a->size; i++) {
-          shape[i] = a->shape[i];
-        }
-        shape[axis] = 1, ndim = a->ndim;
-      }
-    }
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // max_tensor_cuda(a, out, axis_size, shape, axis);
+    // if (keepdim) {
+    //   if (axis == -1) {
+    //     ndim = a->ndim, shape = (int*)malloc((a->ndim) * sizeof(int));
+    //     for (int i = 0; i < a->size; i++) {
+    //       shape[i] = 1;
+    //     }
+    //   } else {
+    //     shape = (int*)malloc(a->ndim * sizeof(int));
+    //     for (int i = 0; i < a->size; i++) {
+    //       shape[i] = a->shape[i];
+    //     }
+    //     shape[axis] = 1, ndim = a->ndim;
+    //   }
+    // }
   }
   return out;
 }
@@ -641,21 +685,23 @@ Tensor* min_tensor(Tensor* a, int axis, bool keepdim) {
       }
     }
   } else {
-  min_tensor_cuda(a, out, axis_size, shape, axis);
-    if (keepdim) {
-      if (axis == -1) {
-        ndim = a->ndim, shape = (int*)malloc((a->ndim) * sizeof(int));
-        for (int i = 0; i < a->size; i++) {
-          shape[i] = 1;
-        }
-      } else {
-        shape = (int*)malloc(a->ndim * sizeof(int));
-        for (int i = 0; i < a->size; i++) {
-          shape[i] = a->shape[i];
-        }
-        shape[axis] = 1, ndim = a->ndim;
-      }
-    }
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // min_tensor_cuda(a, out, axis_size, shape, axis);
+    //   if (keepdim) {
+    //     if (axis == -1) {
+    //       ndim = a->ndim, shape = (int*)malloc((a->ndim) * sizeof(int));
+    //       for (int i = 0; i < a->size; i++) {
+    //         shape[i] = 1;
+    //       }
+    //     } else {
+    //       shape = (int*)malloc(a->ndim * sizeof(int));
+    //       for (int i = 0; i < a->size; i++) {
+    //         shape[i] = a->shape[i];
+    //       }
+    //       shape[axis] = 1, ndim = a->ndim;
+    //     }
+    //   }
   }
   return out;
 }
@@ -665,7 +711,9 @@ Tensor* sin_tensor(Tensor* a) {
   if (strcmp(a->device, "cpu") == 0) {
     sin_tensor_cpu(a, out);
   } else {
-    sin_tensor_cuda(a, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // sin_tensor_cuda(a, out);
   }
   return out;
 }
@@ -675,7 +723,9 @@ Tensor* cos_tensor(Tensor* a) {
   if (strcmp(a->device, "cpu") == 0) {
     cos_tensor_cpu(a, out);
   } else {
-    cos_tensor_cuda(a, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // cos_tensor_cuda(a, out);
   }
   return out;
 }
@@ -685,7 +735,9 @@ Tensor* sigmoid_tensor(Tensor* a) {
   if (strcmp(a->device, "cpu") == 0) {
     sigmoid_tensor_cpu(a, out);
   } else {
-    sigmoid_tensor_cuda(a, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // sigmoid_tensor_cuda(a, out);
   }
   return out;
 }
@@ -695,7 +747,9 @@ Tensor* tanh_tensor(Tensor* a) {
   if (strcmp(a->device, "cpu") == 0) {
     tanh_tensor_cpu(a, out);
   } else {
-    tanh_tensor_cuda(a, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // tanh_tensor_cuda(a, out);
   }
   return out;
 }
@@ -705,7 +759,9 @@ Tensor* relu_tensor(Tensor* a) {
   if (strcmp(a->device, "cpu") == 0) {
     relu_tensor_cpu(a, out);
   } else {
-    relu_tensor_cuda(a, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // relu_tensor_cuda(a, out);
   }
   return out;
 }
@@ -730,7 +786,9 @@ Tensor* reshape_tensor(Tensor* a, int* new_shape, int new_ndim) {
   if (strcmp(a->device, "cpu") == 0) {
     reassign_tensor_cpu(a, out);
   } else {
-    reassign_tensor_cuda(a, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // reassign_tensor_cuda(a, out);
   }
   return out;
 }
@@ -761,39 +819,43 @@ Tensor* transpose_tensor(Tensor* a) {
         exit(1);
     }
   } else {
-    switch(ndim) {
-      case 1:
-        transpose_1d_tensor_cuda(a, out);
-        break;
-      case 2:
-        transpose_2d_tensor_cuda(a, out);
-        break;
-      case 3:
-        transpose_3d_tensor_cuda(a, out);
-        break;
-      default:
-        fprintf(stderr, "Transpose supported only for 3-dim tensor");
-        exit(1);
-    }
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // switch(ndim) {
+    //   case 1:
+    //     transpose_1d_tensor_cuda(a, out);
+    //     break;
+    //   case 2:
+    //     transpose_2d_tensor_cuda(a, out);
+    //     break;
+    //   case 3:
+    //     transpose_3d_tensor_cuda(a, out);
+    //     break;
+    //   default:
+    //     fprintf(stderr, "Transpose supported only for 3-dim tensor");
+    //     exit(1);
+    // }
   }
   return out;
 }
 
 void make_contiguous(Tensor* a) {
-  int* new_strides = (int*)malloc(a->ndim * sizeof(int));
-  if (new_strides == NULL) {
-    fprintf(stderr, "Memory allocation failed\n");
-  }
-  int stride = 1;
-  for (int i = a->ndim - 1; i >= 0; i--) {
-    new_strides[i] = stride;
-    stride *= a->shape[i];
-  }
+  // int* new_strides = (int*)malloc(a->ndim * sizeof(int));
+  // if (new_strides == NULL) {
+  //   fprintf(stderr, "Memory allocation failed\n");
+  // }
+  // int stride = 1;
+  // for (int i = a->ndim - 1; i >= 0; i--) {
+  //   new_strides[i] = stride;
+  //   stride *= a->shape[i];
+  // }
   Tensor* out = create_tensor(NULL, a->shape, a->ndim, a->device, a->dtype);
   if (strcmp(a->device, "cpu") == 0) {
-    make_contagious_tensor_cpu(a, out, new_strides);
+    make_contiguous_tensor_cpu(a, out);
   } else {
-    make_contagious_tensor_cuda(a, out, new_strides);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // make_contiguous_tensor_cuda(a, out, new_strides);
   }
 }
 
@@ -810,8 +872,11 @@ Tensor* equal_tensor(Tensor* a, Tensor* b) {
   if (strcmp(a->device, "cpu") == 0) {
     equal_tensor_cpu(a, b, out);
   } else {
-    equal_tensor_cuda(a, b, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // equal_tensor_cuda(a, b, out);
   }
+  return out;
 }
 
 Tensor* equal_broadcasted_tensor(Tensor* a, Tensor* b) {
@@ -842,7 +907,9 @@ Tensor* equal_broadcasted_tensor(Tensor* a, Tensor* b) {
   if (strcmp(a->device, "cpu") == 0) {
     equal_broadcasted_tensor_cpu(a, b, out, broadcasted_shape, broadcasted_size);
   } else {
-    equal_broadcasted_tensor_cuda(a, b, out, broadcasted_shape, broadcasted_size);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // equal_broadcasted_tensor_cuda(a, b, out, broadcasted_shape, broadcasted_size);
   }
   return out;
 }
@@ -852,7 +919,9 @@ Tensor* zeros_like_tensor(Tensor* a) {
   if (strcmp(a->device, "cpu") == 0) {
     ones_like_tensor_cpu(a->size, out);
   } else {
-    ones_like_tensor_cuda(a->size, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // ones_like_tensor_cuda(a->size, out);
   }
   return out;
 }
@@ -862,7 +931,9 @@ Tensor* ones_like_tensor(Tensor* a) {
   if (strcmp(a->device, "cpu") == 0) {
     ones_like_tensor_cpu(a->size, out);
   } else {
-    ones_like_tensor_cuda(a->size, out);
+    fprintf(stderr, "Device not available right now!\n");
+    exit(EXIT_FAILURE);
+    // ones_like_tensor_cuda(a->size, out);
   }
   return out;
 }

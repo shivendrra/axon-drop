@@ -248,12 +248,6 @@ void tensor_pow_scalar_cpu(Tensor* a, Scalar* exp, Tensor* out) {
   }
 }
 
-void reassign_tensor_cpu(Tensor* a, Tensor* out) {
-  for (int i = 0; i < a->size; i++) {
-    out->data[i] = a->data[i];
-  }
-}
-
 void make_contiguous_tensor_cpu(Tensor* a, Tensor* out) {
   if (!a || !out) {
     fprintf(stderr, "Null Tensor provided for make_contiguous_tensor_cpu.\n");
