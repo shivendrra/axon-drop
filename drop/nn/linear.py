@@ -1,4 +1,4 @@
-from ..tensor import tensor
+from .._tensor import tensor
 from .parameter import Parameter
 from .module import Module
 from ..helpers.utils import _randn

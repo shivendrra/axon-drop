@@ -1,5 +1,5 @@
-from .cbase import CScalar, lib
-from .cbase import DTYPE_FLOAT32, DTYPE_FLOAT64, DTYPE_INT16, DTYPE_INT32, DTYPE_INT64, DTYPE_INT8
+from ._core import CScalar, libscalar
+from ._core import DTYPE_FLOAT32, DTYPE_FLOAT64, DTYPE_INT16, DTYPE_INT32, DTYPE_INT64, DTYPE_INT8
 import ctypes
 from typing import *
 
@@ -23,24 +23,24 @@ class scalar:
       self.value = data
     else:
       dtype = dtype if dtype is not None else DTYPE_FLOAT32
-      self.value = lib.initialize_scalars(ctypes.c_float(data), ctypes.c_int(dtype), None, 0)
+      self.value = libscalar.initialize_scalars(ctypes.c_float(data), ctypes.c_int(dtype), None, 0)
     self.prev = set()
 
   @property
   def data(self):
-    return lib.get_scalar_data(self.value)
+    return libscalar.get_scalar_data(self.value)
 
   @data.setter
   def data(self, new_data):
-    lib.set_scalar_data(self.value, new_data)
+    libscalar.set_scalar_data(self.value, new_data)
 
   @property
   def grad(self):
-    return lib.get_scalar_grad(self.value)
+    return libscalar.get_scalar_grad(self.value)
   
   @grad.setter
   def grad(self, new_grad):
-    lib.set_scalar_grad(self.value, new_grad)
+    libscalar.set_scalar_grad(self.value, new_grad)
 
   @property
   def dtype(self):
@@ -68,8 +68,8 @@ class scalar:
     return f"Scalar(data={self.data}, grad={self.grad})"
 
   def __str__(self):
-    data_value = lib.get_scalar_data(self.value)
-    grad_value = lib.get_scalar_grad(self.value)
+    data_value = libscalar.get_scalar_data(self.value)
+    grad_value = libscalar.get_scalar_grad(self.value)
     return f"Scalar(data={data_value:.4f}, grad={grad_value:.4f}, dtype={self.dtype})"
 
   def __add__(self, other):
@@ -77,7 +77,7 @@ class scalar:
       other = other
     else:
       other = scalar(other)
-    out = scalar(lib.add_val(self.value, other.value).contents)
+    out = scalar(libscalar.add_val(self.value, other.value).contents)
     out.prev = (self, other)
     return out
     
@@ -89,7 +89,7 @@ class scalar:
       other = other
     else:
       other = scalar(other)
-    out = scalar(lib.mul_val(self.value, other.value).contents)
+    out = scalar(libscalar.mul_val(self.value, other.value).contents)
     out.prev = (self, other)
     return out
     
@@ -97,12 +97,12 @@ class scalar:
     return self * other
 
   def __pow__(self, exp):
-    out = scalar(lib.pow_val(self.value, exp).contents)
+    out = scalar(libscalar.pow_val(self.value, exp).contents)
     out.prev = (self)
     return out
 
   def __neg__(self):
-    out = scalar(lib.negate(self.value).contents)
+    out = scalar(libscalar.negate(self.value).contents)
     out.prev = (self, )
     return out
 
@@ -111,7 +111,7 @@ class scalar:
       other = other
     else:
       other = scalar(other)
-    out = scalar(lib.sub_val(self.value, other.value).contents)
+    out = scalar(libscalar.sub_val(self.value, other.value).contents)
     out.prev = (self, other)
     return out
     
@@ -123,42 +123,47 @@ class scalar:
       other = other
     else:
       other = scalar(other)
-    out = scalar(lib.div_val(self.value, other.value).contents)
+    out = scalar(libscalar.div_val(self.value, other.value).contents)
     out.prev = (self, other)
     return out
 
   def __rtruediv__(self, other):
     return other / self
+  
+  def log(self):
+    out = scalar(libscalar.log_val(self.value).contents)
+    out.prev = (self, )
+    return out
 
   def relu(self):
-    out = scalar(lib.relu(self.value).contents)
+    out = scalar(libscalar.relu(self.value).contents)
     out.prev = (self, )
     return out
 
   def sigmoid(self):
-    out = scalar(lib.sigmoid(self.value).contents)
+    out = scalar(libscalar.sigmoid(self.value).contents)
     out.prev = (self, )
     return out
   
   def tanh(self):
-    out = scalar(lib.tan_h(self.value).contents)
+    out = scalar(libscalar.tan_h(self.value).contents)
     out.prev = (self, )
     return out
   
   def gelu(self):
-    out = scalar(lib.gelu(self.value).contents)
+    out = scalar(libscalar.gelu(self.value).contents)
     out.prev = (self, )
     return out
   
   def silu(self):
-    out = scalar(lib.silu(self.value).contents)
+    out = scalar(libscalar.silu(self.value).contents)
     out.prev = (self, )
     return out
 
   def swiglu(self):
-    out = scalar(lib.swiglu(self.value).contents)
+    out = scalar(libscalar.swiglu(self.value).contents)
     out.prev = (self, )
     return out
   
   def backward(self):
-    lib.backward(self.value)
+    libscalar.backward(self.value)

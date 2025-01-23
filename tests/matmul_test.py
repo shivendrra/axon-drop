@@ -4,7 +4,7 @@ import numpy as np
 
 # Generate random matrices
 a_axon = drop.randn(shape=(100, 100))
-a = drop.tensor(a_axon, dtype=drop.int8)
+a = drop._tensor(a_axon, dtype=drop.int8)
 
 # Measure timeit for axon matrix multiplication
 start_timeit_axon = timeit.default_timer()

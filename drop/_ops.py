@@ -1,5 +1,5 @@
-from .tensor import tensor
-from .helpers.utils import _zeros
+from ._tensor import tensor
+from ._utils import _zeros
 from .helpers.shape import squeeze, unsqueeze, get_shape
 from typing import *
 

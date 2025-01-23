@@ -46,11 +46,11 @@ extern "C" {
   Tensor* matmul_tensor(Tensor* a, Tensor* b);
   Tensor* batched_matmul_tensor(Tensor* a, Tensor* b);
   Tensor* broadcasted_batched_matmul_tensor_cpu(Tensor* a, Tensor* b);
-  Tensor* scalar_mul_tensor(Tensor* a, float b);
-  Tensor* scalar_div_tensor(float a, Tensor* b);
-  Tensor* tensor_div_scalar(Tensor* a, float b);
-  Tensor* tensor_pow_scalar(Tensor* a, float exponent);
-  Tensor* scalar_pow_tensor(float base, Tensor* a);
+  Tensor* scalar_mul_tensor(Tensor* a, Scalar* b);
+  Tensor* scalar_div_tensor(Scalar* a, Tensor* b);
+  Tensor* tensor_div_scalar(Tensor* a, Scalar* b);
+  Tensor* tensor_pow_scalar(Tensor* a, Scalar* exponent);
+  Tensor* scalar_pow_tensor(Scalar* base, Tensor* a);
   Tensor* log_tensor(Tensor* a);
   Tensor* sum_tensor(Tensor* a, int axis, bool keepdim);
   Tensor* max_tensor(Tensor* a, int axis, bool keepdim);
