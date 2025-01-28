@@ -55,7 +55,7 @@ Tensor* create_tensor(float* data, int* shape, int ndim, DType dtype) {
     exit(-1);
   }
   for (int i = 0; i < self->size; i++) {
-    self->aux[i] = get_data_as_float(self->data, self->dtype);
+    self->aux[i] = data[i];
   }
   // allocation memory for data (array of Scalars)
   self->data = (Scalar*)malloc(self->size * sizeof(Scalar));
@@ -68,14 +68,10 @@ Tensor* create_tensor(float* data, int* shape, int ndim, DType dtype) {
   }
 
   // initializing each element as a Scalar
-  if (data != NULL) {
-    // ff data is provided, initialize Scalars with values from data
-    for (int i = 0; i < self->size; i++) {
+  for (int i = 0; i < self->size; i++) {
+    if (data) {
       self->data[i] = *initialize_scalars(data[i], dtype, NULL, 0);
-    }
-  } else {
-    // if data is NULL, initialize Scalars with default values (0.0)
-    for (int i = 0; i < self->size; i++) {
+    } else {
       self->data[i] = *initialize_scalars(0.0f, dtype, NULL, 0);
     }
   }
@@ -91,6 +87,7 @@ void delete_tensor(Tensor* tensor) {
   free(tensor->data);
   free(tensor->strides);
   free(tensor->shape);
+  free(tensor->aux);
   free(tensor);
 }
 
@@ -104,7 +101,9 @@ void delete_shape(Tensor* tensor) {
 void delete_data(Tensor* tensor) {
   if (tensor->data != NULL) {
     free(tensor->data);
+    free(tensor->aux);
     tensor->data = NULL;
+    tensor->aux = NULL;
   }
 }
 
@@ -605,29 +604,32 @@ Tensor* ones_like_tensor(Tensor* a) {
   return out;
 }
 
+// helper function to truncate elements in a single row
 void truncate_row(const float* row, int length, int max_display, char* result) {
-  strcat(result, "\t[");
+  strcat(result, "  [");
   if (length > max_display) {
     for (int i = 0; i < max_display / 2; i++) {
       char buffer[16];
-      sprintf(buffer, "%d", row[i]);
+      sprintf(buffer, "%.2f", row[i]);
       strcat(result, buffer);
       strcat(result, ", ");
     }
     strcat(result, "...");
     for (int i = length - max_display / 2; i < length; i++) {
       char buffer[16];
-      sprintf(buffer, "%d", row[i]);
+      sprintf(buffer, "%.2f", row[i]);
       strcat(result, ", ");
+      strcat(result, buffer);
     }
 
+    // removing trailing comma and space
     if (result[strlen(result) - 2] == ',') {
       result[strlen(result) - 2] = '\0';
     }
   } else {
     for (int i = 0; i < length; i++) {
       char buffer[16];
-      sprintf(buffer, "%d", row[i]);
+      sprintf(buffer, "%.2f", row[i]);
       strcat(result, buffer);
       if (i != length - 1) strcat(result, ", ");
     }
@@ -635,13 +637,15 @@ void truncate_row(const float* row, int length, int max_display, char* result) {
   strcat(result, "]");
 }
 
+// recursive function to format data as a nested array with truncation
 void format_tensor(const float* data, const int* shape, int ndim, int level, char* result) {
   if (ndim == 1) {
     truncate_row(data, shape[0], 8, result);
+    return;
   }
 
   strcat(result, "[\n");
-  int rows_to_display = shape[0] > 4 ? 2 : shape[0];
+  int rows_to_display = shape[0] > 4 ? 2 : shape[0]; // truncate rows if needed
   for (int i = 0; i < rows_to_display; i++) {
     if (i > 0) strcat(result, ",\n");
     for (int j = 0; j < level + 1; j++) strcat(result, "  ");
@@ -651,7 +655,7 @@ void format_tensor(const float* data, const int* shape, int ndim, int level, cha
   if (shape[0] > 4) {
     strcat(result, ",\n");
     for (int j = 0; j < level + 1; j++) strcat(result, "  ");
-    strcat(result, "\t...");
+    strcat(result, "...");
     strcat(result, ",\n");
     for (int j = 0; j < level + 1; j++) strcat(result, "  ");
     for (int i = shape[0] - 2; i < shape[0]; i++) {
@@ -663,8 +667,7 @@ void format_tensor(const float* data, const int* shape, int ndim, int level, cha
 }
 
 void print_tensor(Tensor* a) {
-  const float* data = a->aux;
   char result[4096] = "";
-  format_tensor(data, a->shape, a->ndim, 0, result);
+  format_tensor(a->aux, a->shape, a->ndim, 0, result);
   printf("tensor(%s, dtype=drop.%s)\n", result, dtype_to_string(a->dtype));
 }

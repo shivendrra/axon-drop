@@ -220,7 +220,7 @@ Scalar* silu(Scalar* a) {
 void gelu_backward(Scalar* self) {
   if (self->_prev_size == 1) {
     float x = get_data_as_float(self->_prev[0]->data, self->_prev[0]->dtype);
-    float grad = 0.5 * (1.0 + erf(x / sqrt(2.0))) + (x * exp(-x * x / 2.0) / sqrt(2.0 * M_PI));
+    float grad = 0.5 * (1.0 + erf(x / sqrt(2.0))) + (x * exp(-x * x / 2.0) / sqrt(2.0 * PI_VAL));
     set_data_from_float(self->_prev[0]->grad, self->_prev[0]->dtype, get_data_as_float(self->_prev[0]->grad, self->_prev[0]->dtype) + get_data_as_float(self->grad, self->dtype) * grad);
   }
 }
@@ -371,7 +371,7 @@ void backward(Scalar* self) {
 }
 
 void print(Scalar* v) {
-  std::cout << "Value: " << get_data_as_float(v->data, v->dtype) << ", Grad: " << get_data_as_float(v->grad, v->dtype) << std::endl;
+  printf("Value: %f, Grad: %f\n, dtype=drop.%s\n", get_data_as_float(v->data, v->dtype), get_data_as_float(v->data, v->dtype), dtype_to_string(v->dtype));
 }
 
 void cleanup(Scalar* v) {
