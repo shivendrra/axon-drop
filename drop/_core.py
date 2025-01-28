@@ -1,6 +1,6 @@
 import ctypes, os
 from typing import *
-from ctypes import c_void_p, POINTER, c_int, c_float, CFUNCTYPE, c_double
+from ctypes import c_void_p, POINTER, c_int, c_float, CFUNCTYPE, c_bool, c_char_p
 
 DTYPE_INT8, DTYPE_INT16, DTYPE_INT32, DTYPE_INT64, DTYPE_FLOAT32, DTYPE_FLOAT64 = 0, 1, 2, 3, 4, 5
 
@@ -69,55 +69,90 @@ class CTensor(ctypes.Structure):
   pass
 
 CTensor._fields_ = [
-  ('data', POINTER(c_void_p)),   # Single-dimensional array of Scalars (pointer to Scalar)
-  ('shape', POINTER(c_int)),     # Pointer to array holding dimensions of the tensor
-  ('strides', POINTER(c_int)),   # Pointer to array of strides
-  ('ndim', c_int),                      # Number of dimensions in the tensor
-  ('size', c_int),                      # Total number of elements in the tensor
-  ('dtype', c_int),                     # Data type of the tensor
-  ('_prev', POINTER(POINTER(CTensor))),  # Track previous Tensors for autograd
-  ('_prev_size', c_int),                # Number of previous Tensors
+  ('data', POINTER(CScalar)),
+  ('dtype', c_int),
+  ('strides', POINTER(c_int)),
+  ('backstrides', POINTER(c_int)),
+  ('shape', POINTER(c_int)),
+  ('size', c_int),
+  ('ndim', c_int),
+  ('device', POINTER(ctypes.c_char_p)),
+  ('aux', POINTER(c_float))
 ]
 
-libtensor.initialize_tensor.argtypes = [POINTER(c_double), c_int, POINTER(c_int), c_int]
-libtensor.initialize_tensor.restype = POINTER(CTensor)
-libtensor.calculate_strides.argtypes = [POINTER(CTensor)]
-libtensor.calculate_strides.restype = None
-libtensor.get_offset.argtypes = [POINTER(c_int), POINTER(CTensor)]
-libtensor.get_offset.restype = c_int
+libtensor.create_tensor.argtypes = [POINTER(c_float), POINTER(c_int), c_int, c_char_p, c_int]
+libtensor.create_tensor.restype = POINTER(CTensor)
+libtensor.to_device.argtypes = [POINTER(CTensor), c_char_p]
+libtensor.to_device.restype = None
 libtensor.delete_tensor.argtypes = [POINTER(CTensor)]
 libtensor.delete_tensor.restype = None
+libtensor.delete_strides.argtypes = [POINTER(CTensor)]
+libtensor.delete_strides.restype = None
+libtensor.delete_shape.argtypes = [POINTER(CTensor)]
+libtensor.delete_shape.restype = None
+libtensor.delete_data.argtypes = [POINTER(CTensor)]
+libtensor.delete_data.restype = None
+libtensor.delete_device.argtypes = [POINTER(CTensor)]
+libtensor.delete_device.restype = None
+libtensor.delete_backstrides.argtypes = [POINTER(CTensor)]
+libtensor.delete_backstrides.restype = None
+libtensor.delete_aux.argtypes = [POINTER(CTensor)]
+libtensor.delete_aux.restype = None
 libtensor.add_tensor.argtypes = [POINTER(CTensor), POINTER(CTensor)]
 libtensor.add_tensor.restype = POINTER(CTensor)
-libtensor.mul_tensor.argtypes = [POINTER(CTensor), POINTER(CTensor)]
-libtensor.mul_tensor.restype = POINTER(CTensor)
 libtensor.sub_tensor.argtypes = [POINTER(CTensor), POINTER(CTensor)]
 libtensor.sub_tensor.restype = POINTER(CTensor)
-libtensor.neg_tensor.argtypes = [POINTER(CTensor)]
-libtensor.neg_tensor.restype = POINTER(CTensor)
-libtensor.pow_tensor.argtypes = [POINTER(CTensor), c_float]
-libtensor.pow_tensor.restype = POINTER(CTensor)
-libtensor.relu_tensor.argtypes = [POINTER(CTensor)]
-libtensor.relu_tensor.restype = POINTER(CTensor)
-libtensor.gelu_tensor.argtypes = [POINTER(CTensor)]
-libtensor.gelu_tensor.restype = POINTER(CTensor)
-libtensor.tanh_tensor.argtypes = [POINTER(CTensor)]
-libtensor.tanh_tensor.restype = POINTER(CTensor)
+libtensor.elemwise_mul_tensor.argtypes = [POINTER(CTensor), POINTER(CTensor)]
+libtensor.elemwise_mul_tensor.restype = POINTER(CTensor)
+libtensor.tensor_div_tensor.argtypes = [POINTER(CTensor), POINTER(CTensor)]
+libtensor.tensor_div_tensor.restype = POINTER(CTensor)
+libtensor.add_broadcasted_tensor.argtypes = [POINTER(CTensor), POINTER(CTensor)]
+libtensor.add_broadcasted_tensor.restype = POINTER(CTensor)
+libtensor.sub_broadcasted_tensor.argtypes = [POINTER(CTensor), POINTER(CTensor)]
+libtensor.sub_broadcasted_tensor.restype = POINTER(CTensor)
+libtensor.elemwise_mul_broadcasted_tensor.argtypes = [POINTER(CTensor), POINTER(CTensor)]
+libtensor.elemwise_mul_broadcasted_tensor.restype = POINTER(CTensor)
+libtensor.matmul_tensor.argtypes = [POINTER(CTensor), POINTER(CTensor)]
+libtensor.matmul_tensor.restype = POINTER(CTensor)
+libtensor.batched_matmul_tensor.argtypes = [POINTER(CTensor), POINTER(CTensor)]
+libtensor.batched_matmul_tensor.restype = POINTER(CTensor)
+libtensor.broadcasted_batched_matmul_tensor_cpu.argtypes = [POINTER(CTensor), POINTER(CTensor)]
+libtensor.broadcasted_batched_matmul_tensor_cpu.restype = POINTER(CTensor)
+libtensor.scalar_mul_tensor.argtypes = [POINTER(CTensor), POINTER(CScalar)]
+libtensor.scalar_mul_tensor.restype = POINTER(CTensor)
+libtensor.scalar_div_tensor.argtypes = [POINTER(CScalar), POINTER(CTensor)]
+libtensor.scalar_div_tensor.restype = POINTER(CTensor)
+libtensor.tensor_div_scalar.argtypes = [POINTER(CTensor), POINTER(CScalar)]
+libtensor.tensor_div_scalar.restype = POINTER(CTensor)
+libtensor.tensor_pow_scalar.argtypes = [POINTER(CTensor), POINTER(CScalar)]
+libtensor.tensor_pow_scalar.restype = POINTER(CTensor)
+libtensor.scalar_pow_tensor.argtypes = [POINTER(CScalar), POINTER(CTensor)]
+libtensor.scalar_pow_tensor.restype = POINTER(CTensor)
+libtensor.log_tensor.argtypes = [POINTER(CTensor)]
+libtensor.log_tensor.restype = POINTER(CTensor)
+libtensor.sum_tensor.argtypes = [POINTER(CTensor), c_int, c_bool]
+libtensor.sum_tensor.restype = POINTER(CTensor)
+libtensor.max_tensor.argtypes = [POINTER(CTensor), c_int, c_bool]
+libtensor.max_tensor.restype = POINTER(CTensor)
+libtensor.min_tensor.argtypes = [POINTER(CTensor), c_int, c_bool]
+libtensor.min_tensor.restype = POINTER(CTensor)
 libtensor.sigmoid_tensor.argtypes = [POINTER(CTensor)]
 libtensor.sigmoid_tensor.restype = POINTER(CTensor)
-libtensor.silu_tensor.argtypes = [POINTER(CTensor)]
-libtensor.silu_tensor.restype = POINTER(CTensor)
-libtensor.swiglu_tensor.argtypes = [POINTER(CTensor)]
-libtensor.swiglu_tensor.restype = POINTER(CTensor)
-libtensor.backward_tensor.argtypes = [POINTER(CTensor)]
-libtensor.backward_tensor.restype = None
-# libtensor.get_tensor_data.argtypes = [POINTER(CTensor), c_int]
-# libtensor.get_tensor_data.restype = c_double
-# libtensor.get_tensor_grad.argtypes = [POINTER(CTensor), c_int]
-# libtensor.get_tensor_grad.restype = c_double
-# libtensor.set_tensor_data.argtypes = [POINTER(CTensor), c_int, c_double]
-# libtensor.set_tensor_data.restype = None
-# libtensor.set_tensor_grad.argtypes = [POINTER(CTensor), c_int, c_double]
-# libtensor.set_tensor_grad.restype = None
-# libtensor.print_tensor.argtypes = [POINTER(CTensor)]
-# libtensor.print_tensor.restype = None
+libtensor.tanh_tensor.argtypes = [POINTER(CTensor)]
+libtensor.tanh_tensor.restype = POINTER(CTensor)
+libtensor.relu_tensor.argtypes = [POINTER(CTensor)]
+libtensor.relu_tensor.restype = POINTER(CTensor)
+libtensor.reshape_tensor.argtypes = [POINTER(CTensor), POINTER(c_int), c_int]
+libtensor.reshape_tensor.restype = POINTER(CTensor)
+libtensor.transpose_tensor.argtypes = [POINTER(CTensor)]
+libtensor.transpose_tensor.restype = POINTER(CTensor)
+libtensor.make_contiguous.argtypes = [POINTER(CTensor)]
+libtensor.make_contiguous.restype = None
+libtensor.equal_tensor.argtypes = [POINTER(CTensor), POINTER(CTensor)]
+libtensor.equal_tensor.restype = POINTER(CTensor)
+libtensor.equal_broadcasted_tensor.argtypes = [POINTER(CTensor), POINTER(CTensor)]
+libtensor.equal_broadcasted_tensor.restype = POINTER(CTensor)
+libtensor.zeros_like_tensor.argtypes = [POINTER(CTensor)]
+libtensor.zeros_like_tensor.restype = POINTER(CTensor)
+libtensor.ones_like_tensor.argtypes = [POINTER(CTensor)]
+libtensor.ones_like_tensor.restype = POINTER(CTensor)
