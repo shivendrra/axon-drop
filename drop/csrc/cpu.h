@@ -42,6 +42,9 @@ extern "C" {
   void sigmoid_tensor_cpu(Tensor* a, Tensor* out);
   void tanh_tensor_cpu(Tensor* a, Tensor* out);
   void relu_tensor_cpu(Tensor* a, Tensor* out);
+  void gelu_tensor_cpu(Tensor* a, Tensor* out);
+  void swiglu_tensor_cpu(Tensor* a, Tensor* out);
+  void silu_tensor_cpu(Tensor* a, Tensor* out);
 }
 
 #endif

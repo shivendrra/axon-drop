@@ -1,9 +1,9 @@
 /* 
-  - tensor.h header file for tensor.cpp & Tensor
-  - contains the wrapper over Scalar values & computes autograd for each value
-  - compile it as:
-    -- '.so': g++ -shared -fPIC -o libtensor.so tensor.cpp cpu.cpp dtype.cpp scalar.cpp
-    -- '.dll': g++ -shared -o libtensor.dll tensor.cpp cpu.cpp dtype.cpp scalar.cpp
+  * tensor.h header file for tensor.cpp & Tensor
+  * contains the wrapper over Scalar values & computes autograd for each value
+  * compile it as:
+    *- '.so': g++ -shared -fPIC -o libtensor.so tensor.cpp cpu.cpp dtype.cpp scalar.cpp
+    *- '.dll': g++ -shared -o libtensor.dll tensor.cpp cpu.cpp dtype.cpp scalar.cpp
 */
 
 #ifndef __TENSOR__H__
@@ -56,8 +56,13 @@ extern "C" {
   Tensor* max_tensor(Tensor* a, int axis, bool keepdim);
   Tensor* min_tensor(Tensor* a, int axis, bool keepdim);
   Tensor* sigmoid_tensor(Tensor* a);
+  Tensor* sin_tensor(Tensor* a);
+  Tensor* cos_tensor(Tensor* a);
   Tensor* tanh_tensor(Tensor* a);
   Tensor* relu_tensor(Tensor* a);
+  Tensor* gelu_tensor(Tensor* a);
+  Tensor* swiglu_tensor(Tensor* a);
+  Tensor* silu_tensor(Tensor* a);
 
   Tensor* reshape_tensor(Tensor* a, int* new_shape, int new_ndim);
   Tensor* transpose_tensor(Tensor* a);
@@ -66,6 +71,7 @@ extern "C" {
   Tensor* equal_broadcasted_tensor(Tensor* a, Tensor* b);
   Tensor* zeros_like_tensor(Tensor* a);
   Tensor* ones_like_tensor(Tensor* a);
+  void print_tensor(Tensor* a);
 }
 
 #endif
