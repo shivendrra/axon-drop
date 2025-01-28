@@ -21,20 +21,16 @@ typedef struct {
   int* shape;                   // array for defining shape of tensor
   int size;                     // total no of elements
   int ndim;                     // no of dims
-  char* device;                 // device for ops
-  float* aux;             // auxillary copy of data for CUDA ops
+  float* aux;                   // auxillary copy of data for printing tensor
 } Tensor;
 
 extern "C" {
-  Tensor* create_tensor(float* data, int* shape, int ndim, char* device, DType dtype);
-  void to_device(Tensor* a, char* device);
+  Tensor* create_tensor(float* data, int* shape, int ndim, DType dtype);
   void delete_tensor(Tensor* tensor);
   void delete_strides(Tensor* tensor);
   void delete_shape(Tensor* tensor);
   void delete_data(Tensor* tensor);
-  void delete_device(Tensor* tensor);
   void delete_backstrides(Tensor* tensor);
-  void delete_aux(Tensor* tensor);
 
   Tensor* add_tensor(Tensor* a, Tensor* b);
   Tensor* sub_tensor(Tensor* a, Tensor* b);

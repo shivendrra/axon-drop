@@ -289,12 +289,6 @@ void make_contiguous_tensor_cpu(Tensor* a, Tensor* out) {
   }
 
   out->dtype = a->dtype;
-  out->device = (char*)malloc(strlen(a->device) + 1);
-  if (!out->device) {
-    fprintf(stderr, "Failed to allocate memory for output tensor device.\n");
-    exit(1);
-  }
-  strcpy(out->device, a->device);
 
   // initializing the output tensor's data with Scalars compatible with autograd
   for (int i = 0; i < a->size; i++) {
@@ -521,14 +515,12 @@ void transpose_1d_tensor_cpu(Tensor* a, Tensor* out) {
   }
   out->shape[0] = a->shape[0], out->ndim = 1;
   out->dtype = a->dtype;
-  out->device = strdup(a->device);
 }
 
 void transpose_2d_tensor_cpu(Tensor* a, Tensor* out) {
   int rows = a->shape[0], cols = a->shape[1];
   out->shape[0] = cols, out->shape[1] = rows;
   out->ndim = 2, out->dtype = a->dtype;
-  out->device = strdup(a->device);
 
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++) {
