@@ -50,14 +50,6 @@ Tensor* create_tensor(float* data, int* shape, int ndim, DType dtype) {
   for (int i = 0; i < ndim; i++) {
     self->backstrides[i] = (shape[i] - 1) * self->strides[i];
   }
-  self->aux = (float*)malloc(self->size * sizeof(float));
-  if (!self->aux) {
-    fprintf(stderr, "Memory allocation failed\n");
-    exit(-1);
-  }
-  for (int i = 0; i < self->size; i++) {
-    self->aux[i] = (data) ? data[i] : 0.0;
-  }
   // allocation memory for data (array of Scalars)
   self->data = (Scalar*)malloc(self->size * sizeof(Scalar));
   if (!self->data) {
@@ -103,7 +95,6 @@ void delete_data(Tensor* tensor) {
     free(tensor->data);
     free(tensor->aux);
     tensor->data = NULL;
-    tensor->aux = NULL;
   }
 }
 
@@ -692,6 +683,10 @@ void format_tensor(const float* data, const int* shape, int ndim, int level, cha
 
 void print_tensor(Tensor* a) {
   char result[4096] = "";
-  format_tensor(a->aux, a->shape, a->ndim, 0, result);
+  float* aux = (float*)malloc(a->size * sizeof(float));
+  for (int i = 0; i < a->size; i++) {
+    aux[i] = get_data_as_float(a->data[i].data, a->dtype);
+  }
+  format_tensor(aux, a->shape, a->ndim, 0, result);
   printf("tensor(%s, dtype=drop.%s)\n", result, dtype_to_string(a->dtype));
 }

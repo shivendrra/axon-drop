@@ -21,7 +21,6 @@ typedef struct {
   int* shape;                   // array for defining shape of tensor
   int size;                     // total no of elements
   int ndim;                     // no of dims
-  float* aux;                   // auxillary copy of data for printing tensor
 } Tensor;
 
 extern "C" {
