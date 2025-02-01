@@ -26,6 +26,7 @@ int main() {
   Tensor* t3 = add_tensor(t1, t2);         // Element-wise addition
   Tensor* t4 = elemwise_mul_tensor(t1, t2); // Element-wise multiplication
   Tensor* t5 = matmul_tensor(t1, t2);      // Matrix multiplication (2x2)
+  Tensor* t6 = transpose_tensor(t5);  // Transposing tensor
 
   // Print tensors
   printf("\nT3 (T1 + T2):");
@@ -34,6 +35,8 @@ int main() {
   print_tensor(t4);
   printf("\nT5 (T1 @ T2):");
   print_tensor(t5);
+  printf("\nT6 (T5)^T:");
+  print_tensor(t6);
 
   // Perform autograd (assuming backward is integrated similarly)
   printf("\n Performing backward pass on T5: ");

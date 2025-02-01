@@ -79,7 +79,6 @@ void delete_tensor(Tensor* tensor) {
   free(tensor->data);
   free(tensor->strides);
   free(tensor->shape);
-  free(tensor->aux);
   free(tensor);
 }
 
@@ -93,7 +92,6 @@ void delete_shape(Tensor* tensor) {
 void delete_data(Tensor* tensor) {
   if (tensor->data != NULL) {
     free(tensor->data);
-    free(tensor->aux);
     tensor->data = NULL;
   }
 }
