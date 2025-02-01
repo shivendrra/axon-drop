@@ -6,7 +6,7 @@
 #include <cstring>
 
 void add_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for (int i = 0; i <= a->size; i++) {
+  for (int i = 0; i < a->size; ++i) {
     Scalar* s_a = &a->data[i];  // Scalar value from a
     Scalar* s_b = &b->data[i];  // Scalar value from b
     
@@ -15,36 +15,40 @@ void add_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
     // values set in dummy ``out`` tensor
     Scalar* s_out = add_val(s_a, s_b);
     out->data[i] = *s_out;  // assign the value to output Tensor
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
 
 void sub_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for (int i = 0; i <= a->size; i++) {
+  for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];  // Scalar value from a
     Scalar* s_b = &b->data[i];  // Scalar value from b
     Scalar* s_out = sub_val(s_a, s_b);
     out->data[i] = *s_out;  // assign the value to output Tensor
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
 
 void mul_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for (int i = 0; i <= a->size; i++) {
+  for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];  // Scalar value from a
     Scalar* s_b = &b->data[i];  // Scalar value from b
     Scalar* s_out = mul_val(s_a, s_b);
     out->data[i] = *s_out;  // assign the value to output Tensor
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
 
 void div_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for (int i = 0; i <= a->size; i++) {
+  for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
     Scalar* s_b = &b->data[i];
     Scalar* s_out = div_val(s_a, s_b);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -81,6 +85,7 @@ void add_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcas
     Scalar* s_b = &b->data[index2];
     Scalar* s_out = add_val(s_a, s_b);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
   free(strides1);
@@ -119,6 +124,7 @@ void sub_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcas
     Scalar* s_b = &b->data[index2];
     Scalar* s_out = sub_val(s_a, s_b);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
   free(strides1);
@@ -157,6 +163,7 @@ void mul_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcas
     Scalar* s_b = &b->data[index2];
     Scalar* s_out = mul_val(s_a, s_b);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
   free(strides1);
@@ -195,6 +202,7 @@ void div_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadcas
     Scalar* s_b = &b->data[index2];
     Scalar* s_out = div_val(s_a, s_b);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
   free(strides1);
@@ -206,6 +214,7 @@ void scalar_mul_tensor_cpu(Tensor* a, Scalar* b, Tensor* out) {
     Scalar* s_a = &a->data[i];
     Scalar* s_out = mul_val(s_a, b);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -215,6 +224,7 @@ void scalar_div_tensor_cpu(Tensor* a, Scalar* b, Tensor* out) {
     Scalar* s_a = &a->data[i];
     Scalar* s_out = div_val(b, s_a);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -224,6 +234,7 @@ void tensor_div_scalar_cpu(Tensor* a, Scalar* b, Tensor* out) {
     Scalar* s_a = &a->data[i];
     Scalar* s_out = div_val(s_a, b);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -234,6 +245,7 @@ void scalar_pow_tensor_cpu(Tensor* a, Scalar* b, Tensor* out) {
     float s_b = get_data_as_float(b->data, b->dtype);
     Scalar* s_out = pow_val(s_a, s_b);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -244,6 +256,7 @@ void tensor_pow_scalar_cpu(Tensor* a, Scalar* exp, Tensor* out) {
     float s_b = get_data_as_float(exp->data, exp->dtype);
     Scalar* s_out = pow_val(s_a, s_b);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -305,6 +318,7 @@ void make_contiguous_tensor_cpu(Tensor* a, Tensor* out) {
     Scalar* parent_scalar = &a->data[source_index]; // Create a Scalar* for the parent
     Scalar* temp_scalar = initialize_scalars(get_scalar_data(parent_scalar), a->dtype, &parent_scalar, 1);
     out->data[i] = *temp_scalar;
+    out->aux[i] = get_scalar_data(temp_scalar);
     cleanup(temp_scalar);
   }
 }
@@ -314,6 +328,7 @@ void log_tensor_cpu(Tensor* a, Tensor* out) {
     Scalar* s_a = &a->data[i];
     Scalar* s_out = log_val(s_a);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -323,6 +338,7 @@ void tanh_tensor_cpu(Tensor* a, Tensor* out) {
     Scalar* s_a = &a->data[i];
     Scalar* s_out = tan_h(s_a);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -332,6 +348,7 @@ void sigmoid_tensor_cpu(Tensor* a, Tensor* out) {
     Scalar* s_a = &a->data[i];
     Scalar* s_out = sigmoid(s_a);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -341,6 +358,7 @@ void sin_tensor_cpu(Tensor* a, Tensor* out) {
     Scalar* s_a = &a->data[i];
     Scalar* s_out = sin_val(s_a);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -350,6 +368,7 @@ void cos_tensor_cpu(Tensor* a, Tensor* out) {
     Scalar* s_a = &a->data[i];
     Scalar* s_out = cos_val(s_a);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -359,6 +378,7 @@ void relu_tensor_cpu(Tensor* a, Tensor* out) {
     Scalar* s_a = &a->data[i];
     Scalar* s_out = relu(s_a);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -368,6 +388,7 @@ void gelu_tensor_cpu(Tensor* a, Tensor* out) {
     Scalar* s_a = &a->data[i];
     Scalar* s_out = gelu(s_a);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -377,6 +398,7 @@ void swiglu_tensor_cpu(Tensor* a, Tensor* out) {
     Scalar* s_a = &a->data[i];
     Scalar* s_out = swiglu(s_a);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -386,16 +408,18 @@ void silu_tensor_cpu(Tensor* a, Tensor* out) {
     Scalar* s_a = &a->data[i];
     Scalar* s_out = silu(s_a);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
 
 void equal_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for (int i = 0; i <= a->size; i++) {
+  for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
     Scalar* s_b = &b->data[i];
     Scalar* s_out = equal_val(s_a, s_b);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -432,6 +456,7 @@ void equal_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadc
     Scalar* s_b = &b->data[index2];
     Scalar* s_out = equal_val(s_a, s_b);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
   free(strides1);
@@ -443,6 +468,7 @@ void reassign_tensor_cpu(Tensor* a, Tensor* out) {
     Scalar* s_a = &a->data[i];
     Scalar* s_out = initialize_scalars(get_data_as_float(s_a, s_a->dtype), a->dtype, s_a->_prev, s_a->_prev_size);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -451,6 +477,7 @@ void zeros_like_tensor_cpu(int size, Tensor* out) {
   for (int i = 0; i < size; i++) {
     Scalar* s_out = initialize_scalars(0.0f, out->dtype, NULL, 0);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -459,6 +486,7 @@ void ones_like_tensor_cpu(int size, Tensor* out) {
   for (int i = 0; i < size; i++) {
     Scalar* s_out = initialize_scalars(1.0f, out->dtype, NULL, 0);
     out->data[i] = *s_out;
+    out->aux[i] = get_scalar_data(s_out);
     free(s_out);
   }
 }
@@ -477,6 +505,7 @@ void matmul_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
         sum = updated_sum;
       }
       out->data[i * b->shape[1] + j] = *sum;
+      out->aux[i* b->shape[1] + j] = get_scalar_data(sum);
       cleanup(sum);
     }
   }
@@ -589,6 +618,7 @@ void max_tensor_cpu(Tensor* a, Tensor* out, int size, int* res_shape, int axis) 
         }
       }
       out->data[i] = *max_scalar;  // assign the final max Scalar
+      out->aux[i] = get_scalar_data(max_scalar);
     }
   }
 }
@@ -632,6 +662,7 @@ void min_tensor_cpu(Tensor* a, Tensor* out, int size, int* res_shape, int axis) 
         }
       }
       out->data[i] = *min_scalar;  // assign the final min Scalar
+      out->aux[i] = get_scalar_data(min_scalar);
     }
   }
 }
@@ -673,6 +704,7 @@ void sum_tensor_cpu(Tensor* a, Tensor* out, int size, int* res_shape, int axis) 
         sum = new_sum;
       }
       out->data[i] = *sum;  // assign the final sum Scalar
+      out->aux[i] = get_scalar_data(sum);
     }
   }
 }

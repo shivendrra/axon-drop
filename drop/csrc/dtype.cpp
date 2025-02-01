@@ -55,7 +55,6 @@ const char* dtype_to_string(DType dtype) {
 
 // retrieves data as float from given index & dtype
 float get_data_as_float(void* data, DType dtype) {
-  printf("\nget data: %d, dtype: %d\n", data, dtype);
   switch (dtype) {
     case DType::INT8: return *reinterpret_cast<int8_t*>(data);
     case DType::INT16: return *reinterpret_cast<int16_t*>(data);

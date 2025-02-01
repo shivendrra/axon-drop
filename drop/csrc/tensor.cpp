@@ -21,6 +21,7 @@ Tensor* create_tensor(float* data, int* shape, int ndim, DType dtype) {
   }
   memcpy(self->shape, shape, ndim * sizeof(int));
   self->ndim = ndim;
+  self->dtype = dtype;
 
   self->size = 1;
   for (int i = 0; i < ndim; i++) {
@@ -55,7 +56,7 @@ Tensor* create_tensor(float* data, int* shape, int ndim, DType dtype) {
     exit(-1);
   }
   for (int i = 0; i < self->size; i++) {
-    self->aux[i] = data[i];
+    self->aux[i] = (data) ? data[i] : 0.0;
   }
   // allocation memory for data (array of Scalars)
   self->data = (Scalar*)malloc(self->size * sizeof(Scalar));
@@ -72,10 +73,9 @@ Tensor* create_tensor(float* data, int* shape, int ndim, DType dtype) {
     if (data) {
       self->data[i] = *initialize_scalars(data[i], dtype, NULL, 0);
     } else {
-      self->data[i] = *initialize_scalars(0.0f, dtype, NULL, 0);
+      self->data[i] = *initialize_scalars(0.0, dtype, NULL, 0);
     }
   }
-  self->dtype = dtype;
   return self;
 }
 
@@ -220,6 +220,30 @@ Tensor* elemwise_mul_broadcasted_tensor(Tensor* a, Tensor* b) {
   }
   Tensor* out = create_tensor(NULL, broadcasted_shape, max_ndim, a->dtype);
   mul_broadcasted_tensor_cpu(a, b, out, broadcasted_shape, broadcasted_size);
+  return out;
+}
+
+Tensor* div_broadcasted_tensor(Tensor* a, Tensor* b) {
+  int max_ndim = a->ndim > b->ndim ? a->ndim : b->ndim;
+  int* broadcasted_shape = (int*)malloc(max_ndim * sizeof(int));
+  if (broadcasted_shape == NULL) {
+    fprintf(stderr, "Memory allocation failed");
+    exit(1);
+  }
+  for (int i = 0; i < max_ndim; i++) {
+    int dim1 = i < a->ndim ? a->shape[a->ndim - 1 -i] : 1, dim2 = i < b->ndim ? b->shape[b->ndim - 1 -i] : 1;
+    if (dim1 != dim2 && dim1 != 1 && dim2 != 2) {
+      fprintf(stderr, "shapes are not compatible for broadcasting\n");
+      exit(1);
+    }
+    broadcasted_shape[max_ndim - 1 - i] = dim1 > dim2 ? dim1 : dim2;
+  }
+  int broadcasted_size = 1;
+  for (int i = 0; i < max_ndim; i++) {
+    broadcasted_size *= broadcasted_shape[i];
+  }
+  Tensor* out = create_tensor(NULL, broadcasted_shape, max_ndim, a->dtype);
+  div_broadcasted_tensor_cpu(a, b, out, broadcasted_shape, broadcasted_size);
   return out;
 }
 

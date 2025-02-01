@@ -22,29 +22,29 @@ int main() {
   printf("\nT2:");
   print_tensor(t2);
 
-  // // Perform operations
-  // Tensor* t3 = add_tensor(t1, t2);         // Element-wise addition
-  // Tensor* t4 = elemwise_mul_tensor(t1, t2); // Element-wise multiplication
-  // Tensor* t5 = matmul_tensor(t1, t2);      // Matrix multiplication (2x2)
+  // Perform operations
+  Tensor* t3 = add_tensor(t1, t2);         // Element-wise addition
+  Tensor* t4 = elemwise_mul_tensor(t1, t2); // Element-wise multiplication
+  Tensor* t5 = matmul_tensor(t1, t2);      // Matrix multiplication (2x2)
 
-  // // Print tensors
-  // printf("\nT3 (T1 + T2):");
-  // print_tensor(t3);
-  // printf("\nT4 (T1 * T2):");
-  // print_tensor(t4);
-  // printf("\nT5 (T1 @ T2):");
-  // print_tensor(t5);
+  // Print tensors
+  printf("\nT3 (T1 + T2):");
+  print_tensor(t3);
+  printf("\nT4 (T1 * T2):");
+  print_tensor(t4);
+  printf("\nT5 (T1 @ T2):");
+  print_tensor(t5);
 
-  // // Perform autograd (assuming backward is integrated similarly)
-  // printf("\n Performing backward pass on T5: ");
-  // // backward(t5); // Uncomment if backward computation is implemented
+  // Perform autograd (assuming backward is integrated similarly)
+  printf("\n Performing backward pass on T5: ");
+  // backward(t5); // Uncomment if backward computation is implemented
 
-  // // Clean up memory
-  // delete_tensor(t1);
-  // delete_tensor(t2);
-  // delete_tensor(t3);
-  // delete_tensor(t4);
-  // delete_tensor(t5);
+  // Clean up memory
+  delete_tensor(t1);
+  delete_tensor(t2);
+  delete_tensor(t3);
+  delete_tensor(t4);
+  delete_tensor(t5);
 
   return 0;
 }
