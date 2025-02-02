@@ -1,4 +1,4 @@
-from ..tensor import tensor
+from .._tensor import tensor
 from .module import Module
 
 class ReLU(Module):

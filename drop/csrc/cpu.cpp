@@ -6,7 +6,7 @@
 #include <cstring>
 
 void add_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for (int i = 0; i <= a->size; i++) {
+  for (int i = 0; i < a->size; ++i) {
     Scalar* s_a = &a->data[i];  // Scalar value from a
     Scalar* s_b = &b->data[i];  // Scalar value from b
     
@@ -20,7 +20,7 @@ void add_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
 }
 
 void sub_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for (int i = 0; i <= a->size; i++) {
+  for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];  // Scalar value from a
     Scalar* s_b = &b->data[i];  // Scalar value from b
     Scalar* s_out = sub_val(s_a, s_b);
@@ -30,7 +30,7 @@ void sub_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
 }
 
 void mul_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for (int i = 0; i <= a->size; i++) {
+  for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];  // Scalar value from a
     Scalar* s_b = &b->data[i];  // Scalar value from b
     Scalar* s_out = mul_val(s_a, s_b);
@@ -40,7 +40,7 @@ void mul_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
 }
 
 void div_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for (int i = 0; i <= a->size; i++) {
+  for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
     Scalar* s_b = &b->data[i];
     Scalar* s_out = div_val(s_a, s_b);
@@ -248,12 +248,6 @@ void tensor_pow_scalar_cpu(Tensor* a, Scalar* exp, Tensor* out) {
   }
 }
 
-void reassign_tensor_cpu(Tensor* a, Tensor* out) {
-  for (int i = 0; i < a->size; i++) {
-    out->data[i] = a->data[i];
-  }
-}
-
 void make_contiguous_tensor_cpu(Tensor* a, Tensor* out) {
   if (!a || !out) {
     fprintf(stderr, "Null Tensor provided for make_contiguous_tensor_cpu.\n");
@@ -295,12 +289,6 @@ void make_contiguous_tensor_cpu(Tensor* a, Tensor* out) {
   }
 
   out->dtype = a->dtype;
-  out->device = (char*)malloc(strlen(a->device) + 1);
-  if (!out->device) {
-    fprintf(stderr, "Failed to allocate memory for output tensor device.\n");
-    exit(1);
-  }
-  strcpy(out->device, a->device);
 
   // initializing the output tensor's data with Scalars compatible with autograd
   for (int i = 0; i < a->size; i++) {
@@ -403,7 +391,7 @@ void silu_tensor_cpu(Tensor* a, Tensor* out) {
 }
 
 void equal_tensor_cpu(Tensor* a, Tensor* b, Tensor* out) {
-  for (int i = 0; i <= a->size; i++) {
+  for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
     Scalar* s_b = &b->data[i];
     Scalar* s_out = equal_val(s_a, s_b);
@@ -527,14 +515,12 @@ void transpose_1d_tensor_cpu(Tensor* a, Tensor* out) {
   }
   out->shape[0] = a->shape[0], out->ndim = 1;
   out->dtype = a->dtype;
-  out->device = strdup(a->device);
 }
 
 void transpose_2d_tensor_cpu(Tensor* a, Tensor* out) {
   int rows = a->shape[0], cols = a->shape[1];
   out->shape[0] = cols, out->shape[1] = rows;
   out->ndim = 2, out->dtype = a->dtype;
-  out->device = strdup(a->device);
 
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++) {

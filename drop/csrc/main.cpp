@@ -1,77 +1,53 @@
-#include "scalar.h"
+#include "tensor.h"
 #include <iostream>
 
 int main() {
-  Scalar* x1 = initialize_scalars(2.0, DType::FLOAT32, nullptr, 0);
-  Scalar* x2 = initialize_scalars(3.0, DType::FLOAT32, nullptr, 0);
-  Scalar* x3 = initialize_scalars(5.0, DType::FLOAT32, nullptr, 0);
-  Scalar* x4 = initialize_scalars(10.0, DType::FLOAT32, nullptr, 0);
-  Scalar* x5 = initialize_scalars(1.0, DType::FLOAT32, nullptr, 0);
-  Scalar* x6 = initialize_scalars(4.0, DType::FLOAT32, nullptr, 0);
-  Scalar* x7 = initialize_scalars(-2.0, DType::FLOAT32, nullptr, 0);
+  // Initialize tensor shapes and data
+  int* shape1 = (int*)malloc(2 * sizeof(int));
+  int* shape2 = (int*)malloc(2 * sizeof(int));
+  shape1[0] = 2, shape1[1] = 2;
+  shape2[0] = 2, shape2[1] = 2;
 
-  Scalar* a1 = add_val(x1, x2);            // a1 = x1 + x2
-  Scalar* a2 = sub_val(x3, x4);            // a2 = x3 - x4
-  Scalar* a3 = mul_val(a1, a2);            // a3 = a1 * a2
-  Scalar* a4 = div_val(a3, x5);            // a4 = a3 / x5
-  Scalar* a5 = pow_val(a4, 2.0);           // a5 = a4^2
-  
-  Scalar* a6 = sigmoid(a5);                // a6 = Sigmoid(a5)
-  Scalar* a7 = tan_h(x7);                  // a7 = Tanh(x7)
-  Scalar* a8 = relu(a3);                   // a8 = ReLU(a3)
-  Scalar* a9 = silu(x6);                   // a9 = SiLU(x6)
-  Scalar* a10 = gelu(x7);                  // a10 = GELU(x7)
-  Scalar* a11 = swiglu(x2);                // a11 = SwiGLU(x2)
+  float* data1 = (float*)malloc(4 * sizeof(float));
+  float* data2 = (float*)malloc(4 * sizeof(float));
+  data1[0] = 1.0; data1[1] = 2.0; data1[2] = 3.0; data1[3] = 4.0;
+  data2[0] = 5.0; data2[1] = 6.0; data2[2] = 7.0; data2[3] = 8.0;
 
-  Scalar* a12 = add_val(a6, a7);           // a12 = a6 + a7
-  Scalar* a13 = add_val(a12, a8);          // a13 = a12 + a8
-  Scalar* a14 = mul_val(a13, a9);          // a14 = a13 * a9
-  Scalar* y = add_val(a14, a11);           // y = a14 + a11
+  // Create tensors
+  DType dtype = DType::FLOAT32;
+  Tensor* t1 = create_tensor(data1, shape1, 2, dtype);
+  Tensor* t2 = create_tensor(data2, shape2, 2, dtype);
+  printf("\nT1:");
+  print_tensor(t1);
+  printf("\nT2:");
+  print_tensor(t2);
 
-  std::cout << "Before backward pass:" << std::endl;
-  print(x1);
-  print(x2);
-  print(x3);
-  print(x4);
-  print(x5);
-  print(x6);
-  print(x7);
-  print(y);
+  // Perform operations
+  Tensor* t3 = add_tensor(t1, t2);         // Element-wise addition
+  Tensor* t4 = elemwise_mul_tensor(t1, t2); // Element-wise multiplication
+  Tensor* t5 = matmul_tensor(t1, t2);      // Matrix multiplication (2x2)
+  Tensor* t6 = transpose_tensor(t5);  // Transposing tensor
 
-  backward(y);
+  // Print tensors
+  printf("\nT3 (T1 + T2):");
+  print_tensor(t3);
+  printf("\nT4 (T1 * T2):");
+  print_tensor(t4);
+  printf("\nT5 (T1 @ T2):");
+  print_tensor(t5);
+  printf("\nT6 (T5)^T:");
+  print_tensor(t6);
 
-  std::cout << "After backward pass:" << std::endl;
-  print(x1);
-  print(x2);
-  print(x3);
-  print(x4);
-  print(x5);
-  print(x6);
-  print(x7);
-  print(y);
+  // Perform autograd (assuming backward is integrated similarly)
+  printf("\n Performing backward pass on T5: ");
+  // backward(t5); // Uncomment if backward computation is implemented
 
-  cleanup(x1);
-  cleanup(x2);
-  cleanup(x3);
-  cleanup(x4);
-  cleanup(x5);
-  cleanup(x6);
-  cleanup(x7);
-  cleanup(a1);
-  cleanup(a2);
-  cleanup(a3);
-  cleanup(a4);
-  cleanup(a5);
-  cleanup(a6);
-  cleanup(a7);
-  cleanup(a8);
-  cleanup(a9);
-  cleanup(a10);
-  cleanup(a11);
-  cleanup(a12);
-  cleanup(a13);
-  cleanup(a14);
-  cleanup(y);
+  // Clean up memory
+  delete_tensor(t1);
+  delete_tensor(t2);
+  delete_tensor(t3);
+  delete_tensor(t4);
+  delete_tensor(t5);
 
   return 0;
 }

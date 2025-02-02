@@ -1,4 +1,4 @@
-from ..tensor import tensor
+from .._tensor import tensor
 from ..helpers.shape import flatten
 
 class Parameter(tensor):

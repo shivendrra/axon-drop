@@ -1,5 +1,11 @@
 from typing import *
-from .utils import _zeros
+
+def _zeros(shape):
+  if not shape:
+    return [0]
+  if len(shape) == 1:
+    return [0] * shape[0]
+  return [_zeros(shape[1:]) for _ in range(shape[0])]
 
 # computes the shape of a tensor
 def get_shape(data):

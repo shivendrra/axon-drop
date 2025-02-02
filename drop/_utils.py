@@ -1,25 +1,52 @@
-""" here lies the functions to generate sample tensors """
+from ._random import random
 
-from .helpers.utils import _zeros, _ones, _randint, _randn, _arange, _zeros_like, _ones_like
-from typing import *
+def _zeros(shape):
+  if not shape:
+    return [0]
+  if len(shape) == 1:
+    return [0] * shape[0]
+  return [_zeros(shape[1:]) for _ in range(shape[0])]
 
-def zeros(shape:tuple) -> list:
-  return _zeros(shape)
+def _ones(shape):
+  if not shape:  # If shape is empty or None, return a scalar 0 or empty list
+    return [1]
+  if len(shape) == 1:
+    return [1] * shape[0]
+  return [_ones(shape[1:]) for _ in range(shape[0])]
 
-def ones(shape:tuple) -> list:
-  return _ones(shape)
+def _randint(low, high, size=None, dtype=int):
+  if size is None:
+    if dtype is None:
+      return random.randint(low, high)
+    else:
+      return dtype(random.randint(low, high))
+  else:
+    if dtype is None:
+      return [random.randint(low, high) for _ in range(size)]
+    else:
+      return [dtype(random.randint(low, high)) for _ in range(size)]
 
-def randint(low:int, high:int, size:int=None) -> list:
-  return _randint(low, high, size)
+def _arange(start, end, step):
+  return [start + i * step for i in range(int((end-start)/step))]
 
-def arange(start:int=0, end:int=10, step:int=1) -> list:
-  return _arange(start, end, step)
+def _randn(domain=(1, -1), shape=None):
+  if len(shape) == 1:
+    return [random.uniform(domain[0], domain[1]) for _ in range(shape[0])]
+  else:
+    return [_randn(domain=domain, shape=shape[1:]) for _ in range(shape[0])]
 
-def randn(domain:tuple=(1,-1), shape:tuple=None) -> list:
-  return _randn(domain, shape)
+def _zeros_like(arr, dtype=int):
+  if isinstance(arr, list):
+    return [_zeros_like(elem) for elem in arr]
+  elif isinstance(arr, tuple):
+    return tuple(_zeros_like(elem) for elem in arr)
+  else:
+    return dtype(0)
 
-def zeros_like(arr:list) -> list:
-  return _zeros_like(arr)
-
-def ones_like(arr:list) -> list:
-  return _ones_like(arr)
+def _ones_like(arr, dtype=int):
+  if isinstance(arr, list):
+    return [_ones_like(elem) for elem in arr]
+  elif isinstance(arr, tuple):
+    return tuple(_ones_like(elem) for elem in arr)
+  else:
+    return dtype(1)

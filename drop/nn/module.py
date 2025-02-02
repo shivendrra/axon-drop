@@ -1,4 +1,4 @@
-from ..tensor import tensor
+from .._tensor import tensor
 from .parameter import Parameter
 from collections import OrderedDict
 import pickle

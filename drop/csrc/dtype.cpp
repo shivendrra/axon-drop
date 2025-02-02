@@ -7,8 +7,8 @@
 
 #include "dtype.h"
 #include <iostream>
-#include <cstring>
-#include <cmath>
+#include <string.h>
+#include <math.h>
 
 // returns the size of the given data type
 size_t dtype_size(DType dtype) {
@@ -27,8 +27,8 @@ size_t dtype_size(DType dtype) {
 void* initialize_data(float value, DType dtype) {
   void* data = malloc(dtype_size(dtype));
   if (!data) {
-    std::cerr << "Memory allocation failed!" << std::endl;
-    return nullptr;
+    fprintf(stderr, "Memory allocation failed\n");
+    exit(-1);
   }
   set_data_from_float(data, dtype, value);
   return data;
@@ -41,7 +41,7 @@ void convert_data(void* data, DType from_dtype, DType to_dtype) {
 }
 
 // converts dtype to string for display
-std::string dtype_to_string(DType dtype) {
+const char* dtype_to_string(DType dtype) {
   switch (dtype) {
     case DType::INT8: return "INT8";
     case DType::INT16: return "INT16";
@@ -88,7 +88,7 @@ void set_data_from_float(void* data, DType dtype, float value) {
       *reinterpret_cast<double*>(data) = static_cast<double>(value);
       break;
     default:
-      std::cerr << "Unknown dtype!" << std::endl;
+      printf("Unknown type!\n");
   }
 }
 
