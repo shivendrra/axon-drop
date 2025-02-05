@@ -8,6 +8,15 @@ def flatten(data):
     return [item for sublist in data for item in flatten(sublist)]
   return [data]
 
+def get_strides(shape):
+  ndim = len(shape)
+  strides = [0] * ndim
+  stride = 1
+  for i in range(ndim - 1, -1, -1):
+    strides[i] = stride
+    stride *= shape[i]  
+  return strides
+
 def flatten_recursive(data:list, start_dim:int=0, end_dim:int=-1) -> list:
   def _recurse_flatten(data, current_dim):
     if current_dim < start_dim:
@@ -60,3 +69,14 @@ def _zeros(shape):
   if len(shape) == 1:
     return [0] * shape[0]
   return [_zeros(shape[1:]) for _ in range(shape[0])]
+
+def can_broadcast(shape1, shape2) -> bool:
+  len1, len2 = len(shape1), len(shape2)
+  if len1 < len2:
+    shape1 = [1] * (len2 - len1) + shape1
+  elif len2 < len1:
+    shape2 = [1] * (len1 - len2) + shape2
+  for dim1, dim2 in zip(shape1, shape2):
+    if dim1 != dim2 and dim1 != 1 and dim2 != 1:
+      return False
+  return True

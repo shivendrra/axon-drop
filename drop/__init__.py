@@ -1,5 +1,4 @@
 from ._scalar import scalar, int8, int16, int32, int64, float32, float64
-from ._ops import *
 from ._tensor import tensor
 from ._random import RNG, random
 from ._utils import (
