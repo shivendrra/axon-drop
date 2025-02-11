@@ -1,232 +1,208 @@
-from ._scalar import scalar
+import ctypes
+from ._core import CScalar, CTensor, libtensor
 from ._core import DTYPE_FLOAT32, DTYPE_FLOAT64, DTYPE_INT16, DTYPE_INT32, DTYPE_INT64, DTYPE_INT8
-from ._helpers import get_shape, get_strides, flatten
-from ._ops import sum_axis, sum_axis0
 from typing import *
+from ._helpers import flatten, get_shape, broadcast_shape
+import os, sys, io
+
 int8, int16, int32, int64, float32, float64 = DTYPE_INT8, DTYPE_INT16, DTYPE_INT32, DTYPE_INT64, DTYPE_FLOAT32, DTYPE_FLOAT64
 
-def compute_grad(self):
-  def _compute_grad(data):
-    if isinstance(data, list):
-      return [_compute_grad(_d) for _d in data]
-    return data.grad
-  return tensor(_compute_grad(self.data), requires_grad=False)
-
 class tensor:
-  def __init__(self, *data, dtype:Optional[Literal['int8', 'int16', 'int32', 'int64', 'float32', 'float64']]=None, requires_grad=True) -> None:
-    data = data[0] if len(data) == 1 and isinstance(data[0], list) else list(data)
-    shape, dtype = get_shape(data), dtype if dtype is not None else float32
-    self.data = self.initialize_data(data, dtype)
-    self.dtype, self.shape, self.ndim = dtype, shape, len(shape)
-    self.requires_grad = requires_grad
-    self.prev = set() if requires_grad else None
-    self.grad_fn = "<NotSet>"
-  
-  def initialize_data(self, data, dtype):
-    def _init(data):
-      if isinstance(data, list):
-        return [_init(_d) for _d in data]
-      return data if isinstance(data, scalar) else scalar(data, dtype)
-    return _init(data)
-  
+  int8, int16, int32, int64, float32, float64 = int8, int16, int32, int64, float32, float64
+  def __init__(self, data=None, dtype:Optional[Literal['int8', 'int16', 'int32', 'int64', 'float32', 'float64']]=None, requires_grad:bool=False):
+    if data is not None:
+      if isinstance(data, CTensor):
+        self.tensor = data
+        self.ndim, self.dtype, self.numel = self.tensor.ndim, self.tensor.dtype, self.tensor.size
+
+      data, shape, dtype = flatten(data), get_shape(data), dtype if dtype else float32
+      self._data_ctype = (ctypes.c_float * len(data))(*data.copy())
+      self._shape_ctype = (ctypes.c_int * len(shape))(*shape.copy())
+      self._dtype_ctype = ctypes.c_int(dtype)
+      self._ndim_ctype = ctypes.c_int(len(shape))
+      self.shape, self.ndim = shape.copy(), len(shape)
+      self.numel = 1
+      self.dtype = dtype
+      for i in self.shape:
+        self.numel *= i
+
+      self.requires_grads = requires_grad
+      self.tensor = libtensor.create_tensor(self._data_ctype, self._shape_ctype, self._ndim_ctype, self._dtype_ctype)
+    else:
+      self.tensor, self.shape, self.ndim, self.requires_grads, self.dtype = None, None, None, None, None
+
+  @classmethod
+  def init_from_c_tensor(cls, c_tensor_ptr, dtype, requires_grad):
+    if not c_tensor_ptr:
+      raise ValueError("Received NULL pointer from C tensor operation.")
+
+    c_tensor = c_tensor_ptr.contents  # dereferencing the pointer
+    tensor_instance = cls()
+    tensor_instance.tensor = c_tensor_ptr   # original pointer stored
+    tensor_instance.shape = [c_tensor.shape[i] for i in range(c_tensor.ndim)]
+    tensor_instance.ndim = c_tensor.ndim
+    tensor_instance.dtype = dtype
+    tensor_instance.numel = c_tensor.size
+    tensor_instance.requires_grads = requires_grad
+    return tensor_instance
+
+  def __del__(self):
+    if self.tensor:
+      libtensor.delete_tensor(self.tensor)
+
+  def __str__(self):
+    if not self.tensor:
+      return "tensor(None)"
+
+    old_stdout = sys.stdout
+    sys.stdout = io.StringIO()
+    libtensor.print_tensor(self.tensor)
+    output = sys.stdout.getvalue()
+    sys.stdout = old_stdout
+    return output.strip()
+
   @property
   def grad(self):
-    return compute_grad(self)
-  
-  @property
-  def strides(self):
-    return get_strides(self.shape)
+    if not self.tensor:
+      return "tensor(Grad:None)"
+    old_stdout = sys.stdout
+    sys.stdout = io.StringIO()
+    libtensor.print_grads(self.tensor)
+    output = sys.stdout.getvalue()
+    sys.stdout = old_stdout
+    return output.strip()
 
-  @property
-  def dtype_str(self):
-    dtype_map = {
-      0: "int8",
-      1: "int16",
-      2: "int32",
-      3: "int64",
-      4: "float32",
-      5: "float64"
-    }
-    return dtype_map.get(self.dtype, "unknown")
-  
-  def __str__(self) -> str:
-    def _repr(data):
-      if isinstance(data, list):
-        return [_repr(_d) for _d in data]
-      return f"{data.data:.4f}"
-    if self.ndim == 1:
-      data_str = ', '.join(_repr(self.data))
-      return f"tensor([{data_str}])"
-    data_str = ',\n\t'.join(['[' + ', '.join(map(str, _repr(row))) + ']' for row in self.data])
-    return f"tensor([{data_str}, dtype=drop.{self.dtype_str}])"
+  def transpose(self):
+    out = libtensor.transpose_tensor(self.tensor)
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
 
-  def __repr__(self) -> str:
-    return f"tensor({self.data})"
+  def flatten(self):
+    out = libtensor.flatten_tensor(self.tensor)
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
 
-  def __getitem__(self, index:tuple):
-    if isinstance(index, tuple):
-      data = self.data
-      for idx in index[:-1]:
-        data = data[idx]
-      return data[index[-1]]
-    else:
-      return self.data[index]
-  
-  def __setattr__(self, name: str, value: Any) -> None:
-    super().__setattr__(name, value)
-
-  def __setitem__(self, index:tuple, value: Any) -> None:
-    if isinstance(index, tuple):
-      data = self.data
-      for idx in index[:-1]:
-        data = data[idx]
-      data[index[-1]] = value
-    else:
-      self.data[index] = value
-
-  def __iter__(self) -> Iterator:
-    for item in self.data:
-      yield item
-
-  def shape(self):
-    return get_shape(self.data)
-  
   def __add__(self, other):
-    def _add(a, b):
-      if isinstance(a, list):
-        return [_add(_a, _b) for _a, _b in zip(a, b)]
-      return a + b
-    out = tensor(_add(self.data, other.data), dtype=self.dtype, requires_grad=self.requires_grad)
-    out.prev = (self, other)
-    out.grad_fn = "<AddBackward>"
-    return out
+    other = other if isinstance(other, tensor) else tensor(other, self.dtype, self.requires_grads)
+    if self.shape != other.shape:
+      _, requires_broadcasting = broadcast_shape(self.shape, other.shape)
+      if requires_broadcasting:
+        out = libtensor.add_broadcasted_tensor(self.tensor, other.tensor)
+      else:
+        raise ValueError(f"Shapes don't match {self.shape} != {other.shape}, hence can't perform the operation!")
+    else:
+      out = libtensor.add_tensor(self.tensor, other.tensor)
+    if not out:
+      raise RuntimeError("Failed to create new tensor in C backend!")
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
+
+  def __sub__(self, other):
+    other = other if isinstance(other, tensor) else tensor(other, self.dtype, self.requires_grads)
+    if self.shape != other.shape:
+      _, requires_broadcasting = broadcast_shape(self.shape, other.shape)
+      if requires_broadcasting:
+        out = libtensor.sub_broadcasted_tensor(self.tensor, other.tensor)
+      else:
+        raise ValueError(f"Shapes don't match {self.shape} != {other.shape}, hence can't perform the operation!")
+    else:
+      out = libtensor.sub_tensor(self.tensor, other.tensor)
+    if not out:
+      raise RuntimeError("Failed to create new tensor in C backend!")
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
 
   def __mul__(self, other):
-    def _mul(a, b):
-      if isinstance(a, list):
-        return [_mul(_a, _b) for _a, _b in zip(a, b)]
-      return a * b
-    out = tensor(_mul(self.data, other.data), dtype=self.dtype, requires_grad=self.requires_grad)
-    out.prev = (self, other)
-    out.grad_fn = "<MulBackward>"
-    return out
-  
-  def __sub__(self, other):
-    def _sub(a, b):
-      if isinstance(a, list):
-        return [_sub(_a, _b) for _a, _b in zip(a, b)]
-      return a - b
-    out = tensor(_sub(self.data, other.data), dtype=self.dtype, requires_grad=self.requires_grad)
-    out.prev = (self, other)
-    out.grad_fn = "<SubBackward>"
-    return out
-  
+    other = other if isinstance(other, tensor) else tensor(other, self.dtype, self.requires_grads)
+    if self.shape != other.shape:
+      _, requires_broadcasting = broadcast_shape(self.shape, other.shape)
+      if requires_broadcasting:
+        out = libtensor.elemwise_mul_broadcasted_tensor(self.tensor, other.tensor)
+      else:
+        raise ValueError(f"Shapes don't match {self.shape} != {other.shape}, hence can't perform the operation!")
+    else:
+      out = libtensor.elemwise_mul_tensor(self.tensor, other.tensor)
+    if not out:
+      raise RuntimeError("Failed to create new tensor in C backend!")
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
+
   def __truediv__(self, other):
-    def _div(a, b):
-      if isinstance(a, list):
-        return [_div(_a, _b) for _a, _b in zip(a, b)]
-      return a / b
-    out = tensor(_div(self.data, other.data), dtype=self.dtype, requires_grad=self.requires_grad)
-    out.prev = (self, other)
-    out.grad_fn = "<DivBackward>"
-    return out
-  
+    other = other if isinstance(other, tensor) else tensor(other, self.dtype, self.requires_grads)
+    if self.shape != other.shape:
+      _, requires_broadcasting = broadcast_shape(self.shape, other.shape)
+      if requires_broadcasting:
+        out = libtensor.div_broadcasted_tensor(self.tensor, other.tensor)
+      else:
+        raise ValueError(f"Shapes don't match {self.shape} != {other.shape}, hence can't perform the operation!")
+    else:
+      out = libtensor.div_tensor(self.tensor, other.tensor)
+    if not out:
+      raise RuntimeError("Failed to create new tensor in C backend!")
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
+
   def __radd__(self, other):
-    return other + self
-  
+    return self + other
+
   def __rmul__(self, other):
-    return other * self
+    return self * other
+  
+  def __rsub__(self, other):
+    return other - self
   
   def __rtruediv__(self, other):
     return other / self
-  
-  def __pow__(self, exp):
-    def _pow(data):
-      if isinstance(data, list):
-        return [_pow(_d) for _d in data]
-      return data ** exp
-    out = tensor(_pow(self.data), dtype=self.dtype, requires_grad=self.requires_grad)
-    out.prev = (self, )
-    out.grad_fn = "<PowBackward>"
-    return out
-  
-  def relu(self):
-    def ops(data):
-      if isinstance(data, list):
-        return [ops(_d) for _d in data]
-      return data.relu()
-    out = tensor(ops(self.data), dtype=self.dtype, requires_grad=self.requires_grad)
-    out.prev = (self, )
-    out.grad_fn = "<ReluBackward>"
-    return out
-  
-  def tanh(self):
-    def ops(data):
-      if isinstance(data, list):
-        return [ops(_d) for _d in data]
-      return data.tanh()
-    out = tensor(ops(self.data), dtype=self.dtype, requires_grad=self.requires_grad)
-    out.prev = (self, )
-    out.grad_fn = "<TanhBackward>"
-    return out
 
-  def gelu(self):
-    def ops(data):
-      if isinstance(data, list):
-        return [ops(_d) for _d in data]
-      return data.gelu()
-    out = tensor(ops(self.data), dtype=self.dtype, requires_grad=self.requires_grad)
-    out.prev = (self, )
-    out.grad_fn = "<geluBackward>"
-    return out
+  def __pow__(self, exp):
+    pass
+
+  def relu(self):
+    out = libtensor.relu_tensor(self.tensor)
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
+
+  def tanh(self):
+    out = libtensor.tanh_tensor(self.tensor)
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
+
+  def cos(self):
+    out = libtensor.cos_tensor(self.tensor)
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
+
+  def sin(self):
+    out = libtensor.sin_tensor(self.tensor)
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
 
   def silu(self):
-    def ops(data):
-      if isinstance(data, list):
-        return [ops(_d) for _d in data]
-      return data.silu()
-    out = tensor(ops(self.data), dtype=self.dtype, requires_grad=self.requires_grad)
-    out.prev = (self, )
-    out.grad_fn = "<SiluBackward>"
-    return out
+    out = libtensor.silu_tensor(self.tensor)
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
 
   def sigmoid(self):
-    def ops(data):
-      if isinstance(data, list):
-        return [ops(_d) for _d in data]
-      return data.sigmoid()
-    out = tensor(ops(self.data), dtype=self.dtype, requires_grad=self.requires_grad)
-    out.prev = (self, )
-    out.grad_fn = "<SigmoidBackward>"
-    return out
+    out = libtensor.sigmoid_tensor(self.tensor)
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
+
+  def gelu(self):
+    out = libtensor.gelu_tensor(self.tensor)
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
 
   def swiglu(self):
-    def ops(data):
-      if isinstance(data, list):
-        return [ops(_d) for _d in data]
-      return data.swiglu()
-    out = tensor(ops(self.data), dtype=self.dtype, requires_grad=self.requires_grad)
-    out.prev = (self, )
-    out.grad_fn = "<SwigluBackward>"
-    return out
+    out = libtensor.swiglu_tensor(self.tensor)
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
+
+  def sum(self, axis:int=-1, keepdims:bool=False):
+    # axis = axis if axis > 0 else self.ndim + axis
+    out = libtensor.sum_tensor(self.tensor, ctypes.c_int(axis), ctypes.c_bool(keepdims))
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
+
+  def max(self, axis:int=-1, keepdims:bool=False):
+    # axis = axis if axis > 0 else self.ndim + axis
+    out = libtensor.max_tensor(self.tensor, ctypes.c_int(axis), ctypes.c_bool(keepdims))
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
+
+  def min(self, axis:int=-1, keepdims:bool=False):
+    # axis = axis if axis > 0 else self.ndim + axis
+    out = libtensor.min_tensor(self.tensor, ctypes.c_int(axis), ctypes.c_bool(keepdims))
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
   
-  def sum(self, axis=None, keepdims=False):
-    if axis == None:
-      if keepdims:
-        out = [[sum(flatten(self.data))]]
-      else:
-        out = sum(flatten(self.data))
-    elif axis == 0:
-      out = sum_axis0(self.data)
-    else:
-      out = sum_axis(self.data, axis, keepdims)
-    out = tensor(out, dtype=self.dtype, requires_grad=self.requires_grad)
-    out.prev = (self, )
-    out.grad_fn = "<SumBackward>"
-    return out
+  def reshape(self, shape:Union[tuple, list]):
+    new_shape = (ctypes.c_int * len(shape))(*list(shape).copy())
+    new_ndim = len(shape)
+    out = libtensor.reshape_tensor(self.tensor, new_shape, ctypes.c_int(new_ndim))
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
 
   def backward(self):
-    if self.grad_fn != "<SumBackward>":
-      raise ValueError("Backward can only be called through 'Sum' function")
-    else:
-      self.data[0].backward()
+    libtensor.tensor_backward(self.tensor)

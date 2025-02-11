@@ -531,7 +531,8 @@ Tensor* reshape_tensor(Tensor* a, int* new_shape, int new_ndim) {
     size *= shape[i];
   }
   if (size != a->size) {
-    fprintf(stderr, "Can't reshape the tensor. tensor's size doesn't match the target size: %d != %d", a->size, size);
+    fprintf(stderr, "Can't reshape the tensor. tensor's size doesn't match the target size: %d != %d\n", a->size, size);
+    return NULL;
   }
   Tensor* out = create_tensor(NULL, shape, ndim, a->dtype);
   reassign_tensor_cpu(a, out);
