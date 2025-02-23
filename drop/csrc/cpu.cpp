@@ -441,9 +441,9 @@ void equal_broadcasted_tensor_cpu(Tensor* a, Tensor* b, Tensor* out, int* broadc
 void reassign_tensor_cpu(Tensor* a, Tensor* out) {
   for (int i = 0; i < a->size; i++) {
     Scalar* s_a = &a->data[i];
-    Scalar* s_out = initialize_scalars(get_data_as_float(s_a, s_a->dtype), a->dtype, s_a->_prev, s_a->_prev_size);
-    out->data[i] = *s_out;
-    free(s_out);
+    out->data[i] = *initialize_scalars(
+      get_data_as_float(s_a, s_a->dtype), a->dtype, s_a->_prev, s_a->_prev_size
+    );
   }
 }
 

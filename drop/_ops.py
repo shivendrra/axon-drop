@@ -1,167 +1,154 @@
-from ._tensor import tensor
+from ._helpers import transpose, get_shape
 from ._utils import _zeros
-from .helpers.shape import squeeze, unsqueeze, get_shape
-from typing import *
 
-def matmul(a:Union[tensor, list], b:Union[tensor, list], dtype=None) -> tensor:
-  a = a if isinstance(a, tensor) else tensor(a, dtype=dtype)
-  b = b if isinstance(b, tensor) else tensor(b, dtype=dtype)
-  return (a @ b)
+def sum_axis0(data):
+  if not isinstance(data[0], list):
+    return sum(data)
 
-def dot(a:Union[tensor, list], b:Union[tensor, list]) -> tensor:
-  a = a if isinstance(a, tensor) else tensor(a)
-  b = b if isinstance(b, tensor) else tensor(b)
-  return a.dot(b)
+  result = []
+  for i in range(len(data[0])):
+    result.append(sum_axis0([d[i] for d in data]))
+  return result
 
-def stack(data: tuple[tensor, tensor], axis: int=0) -> tensor:
-  if not data:
-    raise ValueError("Need atleast one tensor to stack")
+def mean_axis0(data):
+  if not isinstance(data[0], list):
+    return sum(data) / len(data)
 
-  def get_element(data, indices):
-    for idx in indices:
-      data = data[idx]
-    return data
+  result = []
+  for i in range(len(data[0])):
+    result.append(mean_axis0([d[i] for d in data]))
+  return result
 
-  # shape checking
-  base_shape = data[0].shape
-  for d in data:
-    if d.shape != base_shape:
-      raise ValueError("All inputs must be of same shape & size!")
-  
-  # new shape after stacking & initilization
-  new_shape = list(base_shape[:])
-  new_shape.insert(axis, len(data))
-  new_data = _zeros(new_shape)
+def var_axis0(data, ddof=0):
+  mean_values = mean_axis0(data)
+  if not isinstance(data[0], list):
+    return sum((x - mean_values) ** 2 for x in data) / (len(data) - ddof)
 
-  def insert_data(new_data, tensors, axis, indices=[]):
-    if len(indices) == len(new_shape):
-      for idx, tensor in enumerate(tensors):
-        data_idx = indices[:]
-        data_idx[axis] = idx
-        sub_arr = new_data
-        for k in data_idx[:-1]:
-          sub_arr = sub_arr[k]
-        sub_arr[data_idx[-1]] = get_element(tensor.data, indices[:axis] + indices[axis+1:])
-      return
-      
-    for i in range(new_shape[len(indices)]):
-      insert_data(new_data, tensors, axis, indices + [i])
-  
-  insert_data(new_data, data, axis)
-  return tensor(new_data, dtype=data[0].dtype)
+  result = []
+  for i in range(len(data[0])):
+    result.append(var_axis0([d[i] for d in data], ddof))
+  return result
 
-def concat(data: tuple[tensor, tensor], axis: int=0) -> tensor:
-  if not data:
-    raise ValueError("Need atleast one tensor to stack")
-  
-  # shape checking
-  base_shape = list(data[0].shape) # shape of first tensor for target tensor
-  for arr in data:
-    if list(arr.shape)[:axis] + list(arr.shape)[axis+1:] != base_shape[:axis] + base_shape[axis+1:]:
-      raise ValueError("All input tensors must have the same shape except for the concatenation axis")
-  
-  new_shape = base_shape[:]
-  new_shape[axis] *= len(data)
-  new_data = _zeros(new_shape)
-
-  def set_element(data, indices, value):
-    for idx in indices[:-1]:
-      data = data[idx]
-    data[indices[-1]] = value
-
-  def get_element(data, indices):
-    for idx in indices:
-      data = data[idx]
-    return data
-
-  def insert_data(new_data, tensors, axis, indices=[]):
-    if len(indices) == len(new_shape):
-      current_offset = 0
-      for tensor in tensors:
-        if current_offset <= indices[axis] < current_offset + tensor.shape[axis]:
-          local_indices = indices[:]
-          local_indices[axis] -= current_offset
-          ele = get_element(tensor.data, local_indices)
-          set_element(new_data, indices, ele)
-          break
-        current_offset += tensor.shape[axis]
-      return
-      
-    for i in range(new_shape[len(indices)]):
-      insert_data(new_data, tensors, axis, indices + [i])
-  
-  insert_data(new_data, data, axis)
-  return tensor(new_data, dtype=data[0].dtype)
-
-def split(data:Union[tensor, list], idx:int, axis:Optional[int]=None) -> list:
-  def _get_slices(start_idx, end_idx, data):
-    slices = []
-    for start, end in zip(start_idx, end_idx):
-      slices.append(data[start:end])
-    return slices
-  
-  if isinstance(idx, int):
-    N = idx
-    total_len = len(data) if axis == 0 else len(data[0])
-    if total_len % N != 0:
-      raise ValueError("tensor split doesn't results in an equal division")
-    step = total_len // N
-    indices = [i*step for i in range(1, N)]
-  else:
-    indices = idx
-  
-  start_idx = [0] + indices
-  end_idx = indices + [len(data) if axis==0 else len(data)]
-
+def mean_axis(data, axis, keepdims):
   if axis == 0:
-    return _get_slices(start_idx, end_idx, data)
+    transposed = list(map(list, zip(*data)))
+    if all(isinstance(i, list) for i in transposed[0]):
+      transposed = [list(map(list, zip(*d))) for d in transposed]
+    mean_vals = [mean_axis(d, axis - 1, keepdims) if isinstance(d[0], list) else sum(d) / len(d) for d in transposed]
   else:
-    result = []
-    for row in data:
-      result.append(_get_slices(start_idx, end_idx, row))
-    return [list(col) for col in zip(*result)]
-  
-def mean(data:Union[tensor, list], axis:Optional[int]=None, dtype:Optional[Literal['int8', 'int16', 'int32', 'int64', 'float16', 'float32', 'float64']]=None, keepdims:bool=False) -> Union[list, float, int]:
-  data = data if isinstance(data, tensor) else tensor(data, dtype)
-  return data.mean(axis=axis, keepdims=keepdims)
+    mean_vals = [mean_axis(d, axis - 1, keepdims) if isinstance(d[0], list) else sum(d) / len(d) for d in data]
+  if keepdims:
+    mean_vals = [mean_vals]
+  return mean_vals
 
-def var(data:Union[tensor, list], axis:Optional[int]=None, ddof:int=0, dtype:Optional[Literal['int8', 'int16', 'int32', 'int64', 'float16', 'float32', 'float64']]=None, keepdims:bool=False) -> Union[list, float, int]:
-  data = data if isinstance(data, tensor) else tensor(data, dtype)
-  return data.var(axis=axis, ddof=ddof, keepdims=keepdims)
+def var_axis(data, mean_values, axis, ddof, keepdims):
+  if axis == 0:
+    transposed = list(map(list, zip(*data)))
+    if all(isinstance(i, list) for i in transposed[0]):
+      transposed = [list(map(list, zip(*d))) for d in transposed]
+    variance = [var_axis(d, mean_values[i], axis - 1, ddof, keepdims) if isinstance(d[0], list) else sum((x - mean_values[i]) ** 2 for x in d) / (len(d) - ddof) for i, d in enumerate(transposed)]
+  else:
+    variance = [var_axis(d, mean_values[i], axis - 1, ddof, keepdims) if isinstance(d[0], list) else sum((x - mean_values[i]) ** 2 for x in d) / (len(d) - ddof) for i, d in enumerate(data)]
+  if keepdims:
+    variance = [variance]
+  return variance
 
-def std(data:Union[tensor, list], axis:Optional[int]=None, ddof:int=0, dtype:Optional[Literal['int8', 'int16', 'int32', 'int64', 'float16', 'float32', 'float64']]=None, keepdims:bool=False) -> Union[list, float, int]:
-  data = data if isinstance(data, tensor) else tensor(data, dtype)
-  return data.std(axis=axis, ddof=ddof, keepdims=keepdims)
+def sum_axis(data, axis, keepdims):
+  if axis==0:
+    transposed = list(map(list, zip(*data)))
+    if all(isinstance(i, list) for i in transposed[0]):
+      transposed = [list(map(list, zip(*d))) for d in transposed]
+    mean_vals = [sum_axis(d, axis - 1, keepdims) if isinstance(d[0], list) else sum(d) for d in transposed]
+  else:
+    mean_vals = [sum_axis(d, axis - 1, keepdims) if isinstance(d[0], list) else sum(d) for d in data]
+  if keepdims:
+    mean_vals = [mean_vals]
+  return mean_vals
 
-def squeeze(*data, dim:int=0) -> tensor:
-  for _data in data:
-    if dim is not None and dim>=len(get_shape(_data)):
-      dim = dim if dim > 0 else len(get_shape(_data)) + dim
-      raise IndexError(f"Dimension out of range (expected to be in range of {len(get_shape(_data))} dimensions)")
+def matmul(a, b):
+  def _remul(a, b):
+    if len(get_shape(a)) == 2 and len(get_shape(b)) == 2:
+      out = _zeros((len(a), len(b[0])))
+      b_t = transpose(b)
+      for i in range(len(a)):
+        for j in range(len(b_t)):
+          out[i][j] = sum(a[i][k] * b_t[j][k] for k in range(len(a[0])))
+      return out
     else:
-      return squeeze(_data, dim)
+      out_shape = get_shape(a)[:-1] + (get_shape(b)[-1],)
+      out = _zeros(out_shape)
+      for i in range(len(a)):
+        out[i] = _remul((a[i]), (b[i]))
+      return out
 
-def unsqueeze(*data, dim:int=0):
-  for _data in data:
-    dim = dim if dim > 0 else len(get_shape(_data)) + dim
-    return unsqueeze(_data, dim)
+  if get_shape(a)[-1] != get_shape(b)[-2]:
+    raise ValueError("Matrices have incompatible dimensions for matmul")
+  return _remul(a, b)
 
-def clip(data:Union[tensor, list], min, max, out=None) -> tensor:
-  data = data if isinstance(data, tensor) else tensor(data)
-  if out is not None:
-    return data.clip(min_value=min, max_value=max)
+def dot_product(a, b):
+  def dot_product_1d(v1, v2):
+    if len(v1) != len(v2):
+      raise ValueError("Vectors must have the same length")
+    return sum(x * y for x, y in zip(v1, v2))
+
+  def dot_product_2d(m1, m2):
+    if len(m1[0]) != len(m2):
+      raise ValueError("Incompatible dimensions for matrix multiplication")
+    result = [[0] * len(m2[0]) for _ in range(len(m1))]
+    for i in range(len(m1)):
+      for j in range(len(m2[0])):
+        result[i][j] = sum(m1[i][k] * m2[k][j] for k in range(len(m2)))
+    return result
+
+  if isinstance(a[0], list) and isinstance(b[0], list):
+    if len(a[0]) == len(b):
+      return dot_product_2d(a, b)
+    else:
+      raise ValueError("Incompatible dimensions for 2-D dot product")
+  elif isinstance(a[0], list) or isinstance(b[0], list):
+    if isinstance(a[0], list):
+      if len(a[0]) == len(b):
+        return [sum(x * y for x, y in zip(row, b)) for row in a]
+      else:
+        raise ValueError("Incompatible dimensions for 2-D and 1-D dot product")
+    else:
+      if len(a) == len(b):
+        return [sum(x * y for x, y in zip(a, row)) for row in b]
+      else:
+        raise ValueError("Incompatible dimensions for 1-D and 2-D dot product")
   else:
-    out = data.clip(min_value=min, max_value=max)
-    return out
+    if len(a) != len(b):
+      raise ValueError("Vectors must have the same length")
+    return dot_product_1d(a, b)
 
-def reshape(data:Union[tensor, list], new_shape:tuple) -> tensor:
-  data = data if isinstance(data, tensor) else tensor(data)
-  return data.reshape(new_shape)
+def determinant(data):
+  def minor(matrix, row, col):
+    """Calculate the minor of the matrix after removing the specified row and column."""
+    return [row[:col] + row[col+1:] for row in (matrix[:row] + matrix[row+1:])]
 
-def det(data:Union[tensor, list]) -> tensor:
-  data = data if isinstance(data, tensor) else tensor(data)
-  return data.det()
+  def determinant_2d(matrix):
+    """Calculate the determinant of a 2x2 matrix."""
+    if len(matrix) != 2 or len(matrix[0]) != 2:
+      raise ValueError("Matrix must be 2x2")
+    return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]
 
-def swap_axes(data:Union[tensor, list], axis1:int, axis2:int) -> tensor:
-  data = data if isinstance(data, tensor) else tensor(data)
-  return data.swap_axes(axis1, axis2)
+  def determinant_nd(matrix):
+    n = len(matrix)
+    if n == 2:
+      return determinant_2d(matrix)
+    elif n == 1:
+      return matrix[0][0]
+    elif n == 0:
+      return 1
+    
+    det = 0
+    for c in range(n):
+      det += ((-1) ** c) * matrix[0][c] * determinant_nd(minor(matrix, 0, c))
+    return det
+
+  if not data:
+    raise ValueError("Matrix is empty")
+  if not all(len(row) == len(data) for row in data):
+    raise ValueError("Matrix must be square (number of rows must equal number of columns)")
+
+  return determinant_nd(data)

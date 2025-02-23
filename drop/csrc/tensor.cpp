@@ -372,7 +372,7 @@ Tensor* sum_tensor(Tensor* a, int axis, bool keepdim) {
   for (int i = 0; i < ndim; i++) {
     axis_size *= shape[i];
   }
-  Tensor* out = create_tensor(NULL, a->shape, a->ndim, a->dtype);
+  Tensor* out = create_tensor(NULL, shape, ndim, a->dtype);
   sum_tensor_cpu(a, out, axis_size, shape, axis);
   if (keepdim) {
     if (axis == -1) {
@@ -531,7 +531,8 @@ Tensor* reshape_tensor(Tensor* a, int* new_shape, int new_ndim) {
     size *= shape[i];
   }
   if (size != a->size) {
-    fprintf(stderr, "Can't reshape the tensor. tensor's size doesn't match the target size: %d != %d", a->size, size);
+    fprintf(stderr, "Can't reshape the tensor. tensor's size doesn't match the target size: %d != %d\n", a->size, size);
+    return NULL;
   }
   Tensor* out = create_tensor(NULL, shape, ndim, a->dtype);
   reassign_tensor_cpu(a, out);
@@ -617,6 +618,15 @@ Tensor* ones_like_tensor(Tensor* a) {
   return out;
 }
 
+void tensor_backward(Tensor* a) {
+  if (a->size > 1) {
+    fprintf(stderr, "\n Backward function could only be called on a Scalar value for gradient propagation!\n");
+    exit(EXIT_FAILURE);
+  }
+  Scalar* final = &a->data[0];
+  backward(final);
+}
+
 // helper function to truncate elements in a single row
 void truncate_row(const float* row, int length, int max_display, char* result) {
   strcat(result, "  [");
@@ -686,5 +696,15 @@ void print_tensor(Tensor* a) {
     aux[i] = get_data_as_float(a->data[i].data, a->dtype);
   }
   format_tensor(aux, a->shape, a->ndim, 0, result);
-  printf("tensor(%s, dtype=drop.%s)\n", result, dtype_to_string(a->dtype));
+  printf("drop.tensor(%s, dtype=drop.%s)\n", result, dtype_to_string(a->dtype));
+}
+
+void print_grads(Tensor* a) {
+  char result[4096] = "";
+  float* grads = (float*)malloc(a->size * sizeof(float));
+  for (int i = 0; i < a->size; i++) {
+    grads[i] = get_scalar_grad(&a->data[i]);
+  }
+  format_tensor(grads, a->shape, a->ndim, 0, result);
+  printf("drop.grad(%s)\n", result);
 }

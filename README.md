@@ -2,6 +2,8 @@
 
 Drop is a part of the Axon project. It is an autograd library that uses scalar-level autograd instead of tensor-level autograd, which is essentially a Python tensor class wrapper over scalar value classes. The core scalar operations are implemented in C/C++, making it faster and more efficient while supporting additional functions.
 
+``tensor`` class is a wrapper over ``scalar`` class written in pure python, though the actual c-version implementation exist in *tensor.cpp* which works properly and can be used for same purpose but would work faster than the python version.
+
 ## Features
 
 - **Basic Arithmetic Operations**: Addition, subtraction, multiplication, division, exponentiation.

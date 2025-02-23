@@ -1,7 +1,8 @@
-from .._tensor import tensor
-from .parameter import Parameter
+from ._tensor import tensor
 from collections import OrderedDict
 import pickle
+from ._helpers import flatten
+from ._utils import _randn
 
 class Module:
   def __init__(self) -> None:
@@ -31,8 +32,8 @@ class Module:
 
   def zero_grad(self):
     for param in self.parameters():
-      if isinstance(param, tensor):
-        param.zero_grad()
+      # print("param: ", param.grad)
+      param.zero_grad()
 
   def parameters(self):
     params = []
@@ -103,3 +104,51 @@ class Module:
         self._modules[name].load_dict(value)
       else:
         self._params[name].data = value
+
+class Parameter(tensor):
+  def __init__(self, shape) -> None:
+    data = _randn(domain=(-1, 1), shape=shape)
+    super().__init__(data)
+  
+  def zero_grad(self) -> None:
+    self.grad.zero_grad()
+  
+  def tolist(self) -> list:
+    return super().tolist()
+  
+  def numel(self) -> int:
+    return len(flatten(self.data))
+  
+  def __repr__(self) -> str:
+    return super().__repr__()
+  
+  def __str__(self) -> str:
+    return "\nParameter containing:\n" + super().__repr__()
+
+class Linear(Module):
+  def __init__(self, _in, _out, bias=False):
+    super(Linear, self).__init__()
+    self.wei = Parameter(shape=(_in, _out))
+    if bias:
+      self.bias = Parameter(shape=(1, _out))
+    else:
+      self.bias = None
+
+  def __call__(self, x):
+    return self.forward(x)
+
+  def forward(self, x):
+    x = x if isinstance(x, tensor) else tensor(x, requires_grad=True)
+    out = x @ self.wei
+    if self.bias is not None:
+      out = out + self.bias
+    return out
+
+  def parameters(self):
+    params = [self.wei]
+    if self.bias is not None:
+      params.append(self.bias)
+    return params
+  
+  def __repr__(self):
+    return f"<LinearLayer in_features={self.wei.shape[0]} out_features={self.wei.shape[1]}>"

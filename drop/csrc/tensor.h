@@ -67,6 +67,8 @@ extern "C" {
   Tensor* zeros_like_tensor(Tensor* a);
   Tensor* ones_like_tensor(Tensor* a);
   void print_tensor(Tensor* a);
+  void tensor_backward(Tensor* a);
+  void print_grads(Tensor* a);
 }
 
 #endif

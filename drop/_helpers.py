@@ -1,23 +1,21 @@
-from typing import *
-
-def _zeros(shape):
-  if not shape:
-    return [0]
-  if len(shape) == 1:
-    return [0] * shape[0]
-  return [_zeros(shape[1:]) for _ in range(shape[0])]
-
-# computes the shape of a tensor
 def get_shape(data):
   if isinstance(data, list):
     return [len(data), ] + get_shape(data[0])
   return []
 
-# returns a flatten tensor by appending elements recursively
 def flatten(data):
   if isinstance(data, list):
     return [item for sublist in data for item in flatten(sublist)]
   return [data]
+
+def get_strides(shape):
+  ndim = len(shape)
+  strides = [0] * ndim
+  stride = 1
+  for i in range(ndim - 1, -1, -1):
+    strides[i] = stride
+    stride *= shape[i]  
+  return strides
 
 def flatten_recursive(data:list, start_dim:int=0, end_dim:int=-1) -> list:
   def _recurse_flatten(data, current_dim):
@@ -31,7 +29,6 @@ def flatten_recursive(data:list, start_dim:int=0, end_dim:int=-1) -> list:
     end_dim = len(get_shape(data)) - 1
   return _recurse_flatten(data, 0)
 
-# transpose by swaping the extreme dims/axes like np.transpose
 def transpose(data:list) -> list:
   def fill_transposed(original, transposed, current_indices):
     """Recursively fill the transposed array."""
@@ -52,7 +49,6 @@ def transpose(data:list) -> list:
   fill_transposed(data, transposed, [])
   return transposed
 
-# swaps axes, basically recursive swaping of n-d tensor like np.swapaxes
 def swap_axes(array:list, axis1:int, axis2:int) -> list:
   def fill_swapped(original, swapped, axis1, axis2, indices): # recursively fill the swapped data
     if not isinstance(original, list):
@@ -76,8 +72,6 @@ def swap_axes(array:list, axis1:int, axis2:int) -> list:
   fill_swapped(array, swapped, axis1, axis2, [])
   return swapped
 
-# reshapes the input data into new shape
-# flattens it & the builds a new shape
 def reshape(data:list, new_shape:tuple) -> list:
   assert type(new_shape) == tuple, "new shape must be a tuple"
   def _shape_numel(shape):
@@ -112,8 +106,24 @@ def reshape(data:list, new_shape:tuple) -> list:
   flat_data = flatten(data)
   return unflatten(flat_data, new_shape)
 
-# checks the broadcastability
-# creates new target shape for broadcasting
+def _zeros(shape):
+  if not shape:
+    return [0]
+  if len(shape) == 1:
+    return [0] * shape[0]
+  return [_zeros(shape[1:]) for _ in range(shape[0])]
+
+def can_broadcast(shape1, shape2) -> bool:
+  len1, len2 = len(shape1), len(shape2)
+  if len1 < len2:
+    shape1 = [1] * (len2 - len1) + shape1
+  elif len2 < len1:
+    shape2 = [1] * (len1 - len2) + shape2
+  for dim1, dim2 in zip(shape1, shape2):
+    if dim1 != dim2 and dim1 != 1 and dim2 != 1:
+      return False
+  return True
+
 def broadcast_shape(shape1:tuple, shape2:tuple, ops=None) -> tuple:
   if ops == "<MATMUL>":
     if len(shape1) < 2 or len(shape2) < 2:

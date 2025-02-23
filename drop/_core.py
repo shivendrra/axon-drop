@@ -76,14 +76,10 @@ CTensor._fields_ = [
   ('shape', POINTER(c_int)),
   ('size', c_int),
   ('ndim', c_int),
-  ('device', POINTER(ctypes.c_char_p)),
-  ('aux', POINTER(c_float))
 ]
 
-libtensor.create_tensor.argtypes = [POINTER(c_float), POINTER(c_int), c_int, c_char_p, c_int]
+libtensor.create_tensor.argtypes = [POINTER(c_float), POINTER(c_int), c_int, c_int]
 libtensor.create_tensor.restype = POINTER(CTensor)
-libtensor.to_device.argtypes = [POINTER(CTensor), c_char_p]
-libtensor.to_device.restype = None
 libtensor.delete_tensor.argtypes = [POINTER(CTensor)]
 libtensor.delete_tensor.restype = None
 libtensor.delete_strides.argtypes = [POINTER(CTensor)]
@@ -92,12 +88,8 @@ libtensor.delete_shape.argtypes = [POINTER(CTensor)]
 libtensor.delete_shape.restype = None
 libtensor.delete_data.argtypes = [POINTER(CTensor)]
 libtensor.delete_data.restype = None
-libtensor.delete_device.argtypes = [POINTER(CTensor)]
-libtensor.delete_device.restype = None
 libtensor.delete_backstrides.argtypes = [POINTER(CTensor)]
 libtensor.delete_backstrides.restype = None
-libtensor.delete_aux.argtypes = [POINTER(CTensor)]
-libtensor.delete_aux.restype = None
 libtensor.add_tensor.argtypes = [POINTER(CTensor), POINTER(CTensor)]
 libtensor.add_tensor.restype = POINTER(CTensor)
 libtensor.sub_tensor.argtypes = [POINTER(CTensor), POINTER(CTensor)]
@@ -138,10 +130,20 @@ libtensor.min_tensor.argtypes = [POINTER(CTensor), c_int, c_bool]
 libtensor.min_tensor.restype = POINTER(CTensor)
 libtensor.sigmoid_tensor.argtypes = [POINTER(CTensor)]
 libtensor.sigmoid_tensor.restype = POINTER(CTensor)
+libtensor.sin_tensor.argtypes = [POINTER(CTensor)]
+libtensor.sin_tensor.restype = POINTER(CTensor)
+libtensor.cos_tensor.argtypes = [POINTER(CTensor)]
+libtensor.cos_tensor.restype = POINTER(CTensor)
 libtensor.tanh_tensor.argtypes = [POINTER(CTensor)]
 libtensor.tanh_tensor.restype = POINTER(CTensor)
 libtensor.relu_tensor.argtypes = [POINTER(CTensor)]
 libtensor.relu_tensor.restype = POINTER(CTensor)
+libtensor.gelu_tensor.argtypes = [POINTER(CTensor)]
+libtensor.gelu_tensor.restype = POINTER(CTensor)
+libtensor.swiglu_tensor.argtypes = [POINTER(CTensor)]
+libtensor.swiglu_tensor.restype = POINTER(CTensor)
+libtensor.silu_tensor.argtypes = [POINTER(CTensor)]
+libtensor.silu_tensor.restype = POINTER(CTensor)
 libtensor.reshape_tensor.argtypes = [POINTER(CTensor), POINTER(c_int), c_int]
 libtensor.reshape_tensor.restype = POINTER(CTensor)
 libtensor.transpose_tensor.argtypes = [POINTER(CTensor)]
@@ -156,3 +158,9 @@ libtensor.zeros_like_tensor.argtypes = [POINTER(CTensor)]
 libtensor.zeros_like_tensor.restype = POINTER(CTensor)
 libtensor.ones_like_tensor.argtypes = [POINTER(CTensor)]
 libtensor.ones_like_tensor.restype = POINTER(CTensor)
+libtensor.print_tensor.argtypes = [POINTER(CTensor)]
+libtensor.print_tensor.restype = None
+libtensor.tensor_backward.argtypes = [POINTER(CTensor)]
+libtensor.tensor_backward.restype = None
+libtensor.print_grads.argtypes = [POINTER(CTensor)]
+libtensor.print_grads.restype = None

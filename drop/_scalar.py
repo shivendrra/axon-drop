@@ -3,21 +3,10 @@ from ._core import DTYPE_FLOAT32, DTYPE_FLOAT64, DTYPE_INT16, DTYPE_INT32, DTYPE
 import ctypes
 from typing import *
 
-int8 = DTYPE_INT8
-int16 = DTYPE_INT16
-int32 = DTYPE_INT32
-int64 = DTYPE_INT64
-float32 = DTYPE_FLOAT32
-float64 = DTYPE_FLOAT64
+int8, int16, int32, int64, float32, float64 = DTYPE_INT8, DTYPE_INT16, DTYPE_INT32, DTYPE_INT64, DTYPE_FLOAT32, DTYPE_FLOAT64
 
 class scalar:
-  int8 = int8
-  int16 = int16 
-  int32 = int32 
-  int64 = int64 
-  float32 = float32
-  float64 = float64
-
+  int8, int16, int32, int64, float32, float64 = int8, int16, int32, int64, float32, float64
   def __init__(self, data:Union[int, float], dtype:Optional[Literal['int8', 'int16', 'int32', 'int64', 'float32', 'float64']]=None):
     if isinstance(data, CScalar):
       self.value = data
@@ -25,6 +14,7 @@ class scalar:
       dtype = dtype if dtype is not None else DTYPE_FLOAT32
       self.value = libscalar.initialize_scalars(ctypes.c_float(data), ctypes.c_int(dtype), None, 0)
     self.prev = set()
+    self.is_scalar = True
 
   @property
   def data(self):
