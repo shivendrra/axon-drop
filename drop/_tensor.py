@@ -9,7 +9,6 @@ def zeros(shape):
     return [0] * shape[0]
   return [zeros(shape[1:]) for _ in range(shape[0])]
 
-
 def compute_grad(self):
   def _compute_grad(data):
     if isinstance(data, list):
