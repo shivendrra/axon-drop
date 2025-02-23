@@ -1,14 +1,15 @@
 import drop
+from drop.dropy import tensor
 import drop.nn as nn
 
 # Input and target tensors
-xs = drop._tensor([
+xs = tensor([
   [2.0, 3.0, -1.0],
   [3.0, 0.0, -0.5],
   [0.5, 1.0, 1.0],
   [1.0, 1.0, -1.0]
 ], requires_grad=True)
-ys = drop._tensor([1.0, -1.0, -1.0, 1.0], requires_grad=True)
+ys = tensor([1.0, -1.0, -1.0, 1.0], requires_grad=True)
 
 # Define the model
 class MLP(nn.Module):
