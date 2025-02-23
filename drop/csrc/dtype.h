@@ -2,8 +2,7 @@
 #define __DTYPE_H__
 
 #include <cstdint>
-#include <vector>
-#include <string>
+#include <stdint.h>
 
 enum class DType {
   INT8,

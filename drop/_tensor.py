@@ -1,5 +1,6 @@
 import ctypes
 from ._core import CScalar, CTensor, libtensor
+from ._scalar import scalar
 from ._core import DTYPE_FLOAT32, DTYPE_FLOAT64, DTYPE_INT16, DTYPE_INT32, DTYPE_INT64, DTYPE_INT8
 from typing import *
 from ._helpers import flatten, get_shape, broadcast_shape
@@ -28,8 +29,10 @@ class tensor:
 
       self.requires_grads = requires_grad
       self.tensor = libtensor.create_tensor(self._data_ctype, self._shape_ctype, self._ndim_ctype, self._dtype_ctype)
+      self.is_tensor = True
     else:
       self.tensor, self.shape, self.ndim, self.requires_grads, self.dtype = None, None, None, None, None
+      self.is_tensor = None
 
   @classmethod
   def init_from_c_tensor(cls, c_tensor_ptr, dtype, requires_grad):
@@ -122,6 +125,25 @@ class tensor:
       raise RuntimeError("Failed to create new tensor in C backend!")
     return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
 
+  def __matmul__(self, other):
+    other = other if isinstance(other, tensor) else tensor(other, self.dtype, self.requires_grads)
+    if self.shape != other.shape:
+      _, requires_broadcasting = broadcast_shape(self.shape, other.shape)
+      if requires_broadcasting:
+        out = libtensor.broadcasted_batched_matmul_tensor(self.tensor, other.tensor)
+      else:
+        raise ValueError(f"Shapes don't match {self.shape} != {other.shape}, hence can't perform the operation!")
+    else:
+      if self.ndim == 2:
+        out = libtensor.matmul_tensor(self.tensor, other.tensor)
+      elif self.ndim == 3:
+        out = libtensor.batched_matmul_tensor(self.tensor, other.tensor)
+      else:
+        raise IndexError(f"Matrix Multiplication supported only till 3-dims; dims exceeds the limit {self.ndim} > 3")
+    if not out:
+      raise RuntimeError("Failed to create new tensor in C backend!")
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
+
   def __truediv__(self, other):
     other = other if isinstance(other, tensor) else tensor(other, self.dtype, self.requires_grads)
     if self.shape != other.shape:
@@ -149,7 +171,14 @@ class tensor:
     return other / self
 
   def __pow__(self, exp):
-    pass
+    exp = scalar(exp, dtype=self.dtype) if isinstance(exp, (float, int)) else tensor(exp)
+    if exp.is_scalar:
+      out = libtensor.tensor_pow_scalar(self.tensor, exp.value)
+    elif exp.is_tensor:
+      out = libtensor.scalar_pow_tensor(self.tensor[0], exp.tensor)
+    else:
+      raise TypeError(f"Can't identify the type of exp: {exp}; should be a tensor or a scalar")
+    return tensor.init_from_c_tensor(out, self.dtype, self.requires_grads)
 
   def relu(self):
     out = libtensor.relu_tensor(self.tensor)
