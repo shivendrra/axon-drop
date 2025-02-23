@@ -1,5 +1,4 @@
 import drop
-from drop.dropy import tensor
 import drop.nn as nn
 
 class RNN(nn.Module):
@@ -19,14 +18,14 @@ class RNN(nn.Module):
     out = self.h2o(h)
     return out
 
-xs = tensor([
+xs = drop.tensor([
   [[2.0, 3.0, -1.0]],
   [[3.0, 0.0, -0.5]],
   [[0.5, 1.0, 1.0]],
   [[1.0, 1.0, -1.0]]
 ], requires_grad=True)  # Shape: [batch_size, time_steps, input_features]
 
-ys = tensor([[1.0], [-1.0], [-1.0], [1.0]], requires_grad=True)  # Shape: [batch_size, output_features]
+ys = drop.tensor([[1.0], [-1.0], [-1.0], [1.0]], requires_grad=True)  # Shape: [batch_size, output_features]
 model = RNN(3, 10, 1)
 epochs = 100
 learning_rate = 0.01

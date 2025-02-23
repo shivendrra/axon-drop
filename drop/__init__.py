@@ -10,6 +10,5 @@ from ._utils import (
   _ones_like as ones_like,
   _zeros_like as zeros_like
 )
-from .dropy import tensor
 
 __all__ = ['int8', 'int16', 'int32', 'int64', 'float32', 'float64']
