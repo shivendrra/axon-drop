@@ -371,7 +371,7 @@ void backward(Scalar* self) {
 }
 
 void print(Scalar* v) {
-  printf("Value: %f, Grad: %f\n, dtype=drop.%s\n", get_data_as_float(v->data, v->dtype), get_data_as_float(v->data, v->dtype), dtype_to_string(v->dtype));
+  printf("Value: %f, Grad: %f\n, dtype=drop.%s\n", get_data_as_float(v->data, v->dtype), get_data_as_float(v->grad, v->dtype), dtype_to_string(v->dtype));
 }
 
 void cleanup(Scalar* v) {
