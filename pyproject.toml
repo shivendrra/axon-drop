@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "axon-drop"
+version = "0.0.9"
+description = "Tensor manipulation library wrapped over a scalar-level autograd to compute backpropagation like PyTorch, but more like microgad"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "shivendra", email = "shivharsh44@gmail.com"}]
+dependencies = []
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: C",
+  "Programming Language :: C++",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Operating System :: OS Independent",
+  "License :: OSI Approved :: MIT License",
+]
+
+[tool.setuptools]
+packages = ["drop"]
+
+[tool.setuptools.package-data]
+"drop" = [
+  "build/libscalar.so",
+  "build/libtensor.so"
+]
+"csrc" = [
+  "*.h",
+  "*.cpp"
+]
