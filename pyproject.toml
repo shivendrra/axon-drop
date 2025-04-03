@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "axon-drop"
-version = "0.0.9"
+version = "0.1.0"
 description = "Tensor manipulation library wrapped over a scalar-level autograd to compute backpropagation like PyTorch, but more like microgad"
 readme = "README.md"
 license = {text = "MIT"}

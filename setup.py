@@ -7,7 +7,7 @@ current_dir = os.path.abspath(os.path.dirname(__file__))
 with codecs.open(os.path.join(current_dir, "README.md"), encoding="utf-8") as file:
     long_description = file.read()
 
-VERSION = '0.0.9'
+VERSION = '0.1.0'
 DESCRIPTION = ('Tensor manipulation library wrapped over a scalar-level autograd '
                'to compute backpropagation like PyTorch, but more like microgad')
 

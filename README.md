@@ -4,6 +4,11 @@ Drop is a part of the Axon project. It is an autograd library that uses scalar-l
 
 ``tensor`` class is a wrapper over ``scalar`` class written in pure python, though the actual c-version implementation exist in *tensor.cpp* which works properly and can be used for same purpose but would work faster than the python version.
 
+### ***FunFact***: this project is developed almost (90%) by GPT-4o and o3-mini as an experiment to check the understanding, reasoning and ability of language models for big and logically complex projects like this one
+
+## Bounty:
+Solve the bug for the reward. More info in this [Git Issue](https://github.com/shivendrra/axon-drop/issues/19)
+
 ## Features
 
 - **Basic Arithmetic Operations**: Addition, subtraction, multiplication, division, exponentiation.
@@ -12,6 +17,12 @@ Drop is a part of the Axon project. It is an autograd library that uses scalar-l
 - **Efficient and Fast**: Core operations implemented in C/C++.
 
 ## Installation
+
+Install library from PyPI.org:
+
+```
+pip install axon-drop 
+```
 
 Clone this repository and build the library:
 
@@ -28,11 +39,11 @@ The Scalar library is a simple implementation of scalar operations with automati
 Here's a simple example demonstrating how to use the Scalar library:
 
 ```python
-from scalar import Scalar
+from drop import scalar
 
 # Initialize scalars
-x1 = Scalar(2)
-x2 = Scalar(3)
+x1 = scalar(2)
+x2 = scalar(3)
 
 # Perform operations
 a1 = x1 + x2
